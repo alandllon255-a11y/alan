@@ -12,7 +12,7 @@ class ChatService {
   }
 
   // Conectar ao servidor
-  connect(userId, userName) {
+  connect(userId, userName, token) {
     return new Promise((resolve, reject) => {
       // Se já estiver conectado com o mesmo usuário, não reconectar
       if (this.socket && this.socket.connected && this.currentUser?.id === userId) {
@@ -31,6 +31,7 @@ class ChatService {
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
         timeout: 10000,
+        auth: token ? { token } : undefined
       });
 
       // Configurar listeners

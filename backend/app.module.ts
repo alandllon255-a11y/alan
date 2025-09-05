@@ -5,10 +5,11 @@ import { AnswersController } from './answers/answers.controller.js';
 import { AnswersService } from './answers/answers.service.js';
 import { ProfileController } from './users/profile.controller.js';
 import { LeaderboardController } from './leaderboard/leaderboard.controller.js';
+import { AuthController } from './auth/auth.controller.js';
 
 @Module({
   imports: [GamificationModule, ChatModule],
-  controllers: [AnswersController, ProfileController, LeaderboardController],
+  controllers: [AnswersController, ProfileController, LeaderboardController, AuthController],
   providers: [AnswersService],
 })
 export class AppModule {}

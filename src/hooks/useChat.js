@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import chatService from '../services/chatService';
 
-export const useChat = (currentUserId, currentUserName) => {
+export const useChat = (currentUserId, currentUserName, authToken) => {
   const [messages, setMessages] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState({});
@@ -14,7 +14,7 @@ export const useChat = (currentUserId, currentUserName) => {
     let isMounted = true;
     
     if (currentUserId && currentUserName) {
-      chatService.connect(currentUserId, currentUserName).then(() => {
+      chatService.connect(currentUserId, currentUserName, authToken).then(() => {
         if (isMounted) {
           setIsConnected(true);
         }
@@ -26,7 +26,7 @@ export const useChat = (currentUserId, currentUserName) => {
       chatService.disconnect();
       setIsConnected(false);
     };
-  }, [currentUserId, currentUserName]);
+  }, [currentUserId, currentUserName, authToken]);
 
   // Configurar listeners
   useEffect(() => {
