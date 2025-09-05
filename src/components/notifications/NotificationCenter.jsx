@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Bell, X, Check, CheckCheck, MessageSquare, 
-  ThumbsUp, Award, User, Hash, Settings,
-  Filter, FileText, Eye, EyeOff
+  ThumbsUp, Award, User, Settings,
+  Filter
 } from 'lucide-react';
 
 const NotificationCenter = ({ 

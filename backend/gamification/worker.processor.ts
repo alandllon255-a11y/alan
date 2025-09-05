@@ -1,9 +1,9 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { GAMIFICATION_QUEUE } from './gamification.constants';
-import { GamificationRulesService } from './rules.service';
-import { ReputationService } from './reputation.service';
-import { CurrencyService } from './currency.service';
+import { GAMIFICATION_QUEUE } from './gamification.constants.js';
+import { GamificationRulesService } from './rules.service.js';
+import { ReputationService } from './reputation.service.js';
+import { CurrencyService } from './currency.service.js';
 
 @Processor(GAMIFICATION_QUEUE)
 export class GamificationProcessor extends WorkerHost {

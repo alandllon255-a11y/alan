@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  CheckCircle, XCircle, AlertCircle, Info, 
-  X, Check, AlertTriangle 
+  CheckCircle, XCircle, Info, 
+  X, AlertTriangle 
 } from 'lucide-react';
 
 const Toast = ({ 
@@ -134,7 +134,7 @@ const Toast = ({
         )}
       </div>
       
-      <style jsx>{`
+      <style>{`
         @keyframes shrink {
           from { width: 100%; }
           to { width: 0%; }

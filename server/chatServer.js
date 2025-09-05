@@ -116,7 +116,9 @@ io.on('connection', (socket) => {
     // Gamification: count as COMMENT_CREATED (messaging treated as comment-like activity)
     try {
       publishEvent('COMMENT_CREATED', { userId: socket.userId, targetId: roomKey });
-    } catch {}
+    } catch (err) {
+      console.warn('Failed to publish gamification event', err);
+    }
     
     console.log(`💬 ${socket.userName} -> ${receiverId}: ${content}`);
   });

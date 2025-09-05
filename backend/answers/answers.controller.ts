@@ -1,6 +1,6 @@
 import { Controller, Post, Param, Request } from '@nestjs/common';
-import { AnswersService } from './answers.service';
-import { EventTriggerService } from '../gamification/event-trigger.service';
+import { AnswersService } from './answers.service.js';
+import { EventTriggerService } from '../gamification/event-trigger.service.js';
 
 @Controller('answers')
 export class AnswersController {

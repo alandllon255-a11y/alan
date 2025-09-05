@@ -13,6 +13,4 @@ export function getPrisma(): PrismaClient {
   return prismaClient;
 }
 
-export type PrismaTx = Parameters<PrismaClient['$transaction']>[0] extends (infer T)[] ? never : Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
-
 

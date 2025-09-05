@@ -1,4 +1,4 @@
-import { getPrisma } from '../prisma';
+import { getPrisma } from '../prisma.js';
 
 export class ReputationService {
   /**

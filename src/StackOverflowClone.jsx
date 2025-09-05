@@ -1,20 +1,17 @@
 // DevForum - StackOverflow Clone
 import { 
-  Search, TrendingUp, Clock, CheckCircle, ChevronDown, ChevronUp, MessageSquare, 
-  User, Award, Filter, X, Edit2, Trash2, Star, BookOpen, Zap, Target, 
-  Trophy, Code, Bell, MessageCircle as MessageCircleIcon, AtSign, ThumbsUp, ArrowLeft, 
-  Settings, Volume2, VolumeX, Eye, Bookmark, Heart, AlertCircle, Info, Check, Camera, 
-  MapPin, Link as LinkIcon, Calendar, Mail, Github, Linkedin, Twitter, Globe, Shield, Lock, 
-  Unlock, Activity, BarChart, PieChart, TrendingUp as TrendingUpIcon, Coffee, 
-  Briefcase, GraduationCap, Palette, Moon, Sun, Sparkles, Flame as Fire, Gem, Crown, Medal, 
-  Image as ImageIcon, Video as VideoIcon, MoreHorizontal, Users, UserPlus, ChevronLeft, ChevronRight,
-  GalleryHorizontal, ThumbsDown, Send, CheckCheck, GitBranch, PlusCircle, BookCopy, File, UploadCloud,
+  Search, Clock, CheckCircle, ChevronDown, ChevronUp, MessageSquare, 
+  User, Filter, X, Edit2, BookOpen, Zap, 
+  Trophy, Code, Bell, MessageCircle as MessageCircleIcon, ArrowLeft, 
+  Settings, Camera, 
+  MapPin, Link as LinkIcon, Calendar, Github, Linkedin, Twitter, Globe, Shield, Activity, BarChart, PieChart, Coffee, 
+  Briefcase, Moon, Sun, Users,
 
 } from 'lucide-react';
 
 
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ProfileRecentQuestions from './components/profile/ProfileRecentQuestions.jsx';
 import ProfileRecentAnswers from './components/profile/ProfileRecentAnswers.jsx';
 import ChatView from './components/chat/ChatView.jsx';

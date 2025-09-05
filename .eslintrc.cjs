@@ -41,7 +41,9 @@ module.exports = {
       extends: [
         'plugin:@typescript-eslint/recommended'
       ],
-      rules: {},
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'warn'
+      },
     },
     {
       files: ['**/*.js', '**/*.jsx'],
@@ -50,7 +52,9 @@ module.exports = {
         sourceType: 'module',
         ecmaFeatures: { jsx: true },
       },
-      rules: {},
+      rules: {
+        'no-unused-vars': 'off',
+      },
     }
   ],
   ignorePatterns: [

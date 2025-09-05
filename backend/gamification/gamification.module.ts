@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { GAMIFICATION_QUEUE } from './gamification.constants';
-import { EventTriggerService } from './event-trigger.service';
-import { GamificationProcessor } from './worker.processor';
+import { GAMIFICATION_QUEUE } from './gamification.constants.js';
+import { EventTriggerService } from './event-trigger.service.js';
+import { GamificationProcessor } from './worker.processor.js';
 
 @Module({
   imports: [

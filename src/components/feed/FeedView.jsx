@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Heart, MessageCircle, Share2, Bookmark, MoreVertical, 
-  TrendingUp, Clock, Eye, ChevronUp, ChevronDown, 
-  Filter, Sparkles, Flame, Award, RefreshCw, 
-  CheckCircle, AlertCircle, Code, Link2, Image as ImageIcon,
-  Play, Hash, User, Calendar, BarChart, ThumbsUp,
-  MessageSquare, Send, X, Edit2, Trash2, Flag
+  TrendingUp, Clock, Eye, ChevronUp, ChevronDown, Sparkles, Flame, RefreshCw, 
+  CheckCircle, Code, Image as ImageIcon,
+  Play, Hash, User, Calendar, BarChart,
+  MessageSquare, X
 } from 'lucide-react';
 
 const FeedView = ({ 

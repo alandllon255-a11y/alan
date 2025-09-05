@@ -90,7 +90,9 @@ class ChatService {
       try {
         const ev = new CustomEvent('chat-rate-limit', { detail: { type: 'rateLimited', retryAfterMs: data?.retryAfterMs } });
         window.dispatchEvent(ev);
-      } catch {}
+      } catch (err) {
+        console.warn('Failed to dispatch chat-rate-limit event', err);
+      }
     });
 
     // Histórico de mensagens

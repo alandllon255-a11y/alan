@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { GAMIFICATION_QUEUE } from './gamification.constants';
-import { GamificationEventPayload, GamificationEventType } from './events';
+import { GAMIFICATION_QUEUE } from './gamification.constants.js';
+import { GamificationEventPayload, GamificationEventType } from './events.js';
 
 export class EventTriggerService {
   constructor(

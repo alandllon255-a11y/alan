@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, Filter, X, Clock, TrendingUp, 
-  User, Hash, Calendar, SortAsc, SortDesc,
-  Code, FileText, MessageSquare, Award
+  Search, X, 
+  User, Hash, MessageSquare
 } from 'lucide-react';
 
 const AdvancedSearch = ({ 
