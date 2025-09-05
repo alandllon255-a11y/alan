@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   CheckCircle, XCircle, Info, 
   X, AlertTriangle 
@@ -33,14 +33,14 @@ const Toast = ({
     }
     
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, handleClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsLeaving(true);
     setTimeout(() => {
       onClose(id);
     }, 300);
-  };
+  }, [id, onClose]);
 
   const getIcon = () => {
     const icons = {

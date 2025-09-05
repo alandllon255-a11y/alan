@@ -1,11 +1,18 @@
 import { getPrisma } from '../prisma.js';
+import type { GamificationActionType, Prisma } from '@prisma/client';
 
 export class ReputationService {
   /**
    * Grant reputation to a user, log the action, and update current level if needed.
    * newLevel = floor((REP/100)^(1/2.5)) + 1
    */
-  async grantReputation(userId: string, amount: number, actionType: string, entityId?: string, metadata?: unknown) {
+  async grantReputation(
+    userId: string,
+    amount: number,
+    actionType: GamificationActionType,
+    entityId?: string,
+    metadata?: Prisma.InputJsonValue
+  ) {
     const prisma = getPrisma();
     await prisma.$transaction(async (tx) => {
       // Update reputation
@@ -26,11 +33,11 @@ export class ReputationService {
       await tx.gamificationActionLog.create({
         data: {
           userId,
-          actionType: actionType as any,
+          actionType,
           repChange: amount,
           currencyChange: 0,
           relatedEntityId: entityId,
-          metadata: metadata ? (metadata as any) : undefined
+          metadata: metadata ?? undefined
         }
       });
     });

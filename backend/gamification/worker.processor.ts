@@ -1,5 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import type { GamificationActionType } from '@prisma/client';
 import { GAMIFICATION_QUEUE } from './gamification.constants.js';
 import { GamificationRulesService } from './rules.service.js';
 import { ReputationService } from './reputation.service.js';
@@ -12,7 +13,7 @@ export class GamificationProcessor extends WorkerHost {
   private readonly currency = new CurrencyService();
 
   async process(job: Job): Promise<void> {
-    const { type, payload } = job.data as { type: any; payload: any };
+    const { type, payload } = job.data as { type: GamificationActionType; payload: { userId: string; targetId?: string } };
     const rule = this.rules.getRule(type);
     if (!rule) return;
 
