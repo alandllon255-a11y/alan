@@ -15,8 +15,7 @@ COPY tsconfig.backend.json ./
 
 # Instalar dependências (inclui devDependencies)
 RUN npm ci
-
-"# Copiar código do backend"
+# Copiar código do backend
 COPY backend ./backend/
 
 # Gerar cliente Prisma
