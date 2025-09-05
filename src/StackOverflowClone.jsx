@@ -58,7 +58,7 @@ const StackOverflowCloneMain = () => {
     markAsRead,
     getConversationMessages,
     requestNotificationPermission
-  } = useChat(currentUser.id, currentUser.name);
+  } = useChat(currentUser.id, currentUser.name, window.__JWT_TOKEN__);
 
   const [questions, setQuestions] = useState([
     {
