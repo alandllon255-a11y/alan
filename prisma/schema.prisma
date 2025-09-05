@@ -34,7 +34,14 @@ model User {
   name             String?
   password         String
   avatarUrl        String?
+  bannerUrl        String?
   bio              String?
+  location         String?
+  website          String?
+  company          String?
+  username         String?  @unique
+  social           Json?
+  preferences      Json?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
