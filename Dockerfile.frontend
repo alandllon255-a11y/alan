@@ -1,0 +1,22 @@
+# Dockerfile para Frontend React
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar package.json e package-lock.json
+COPY package*.json ./
+
+# Instalar dependências
+RUN npm ci
+
+# Copiar código do frontend
+COPY src ./src/
+COPY index.html ./
+COPY tailwind.config.cjs ./
+COPY postcss.config.cjs ./
+
+# Expor porta
+EXPOSE 5173
+
+# Comando para iniciar em modo desenvolvimento
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

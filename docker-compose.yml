@@ -1,0 +1,47 @@
+version: '3.9'
+services:
+  # Ambiente minimalista SEM banco e SEM backend
+
+  # Servidor de Chat Node.js
+  chat-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.chat
+    container_name: devforum_chat
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - USE_NEST_GAMIFY=false
+    volumes:
+      - ./server:/app/server
+    networks:
+      - devforum-network
+
+  # Frontend React
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: devforum_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+      - VITE_CHAT_URL=http://localhost:3001
+    depends_on:
+      - chat-server
+    volumes:
+      - ./src:/app/src
+      - ./index.html:/app/index.html
+      - ./package.json:/app/package.json
+    networks:
+      - devforum-network
+
+networks:
+  devforum-network:
+    driver: bridge
+

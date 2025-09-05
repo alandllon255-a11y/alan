@@ -1,0 +1,32 @@
+# Dockerfile para Backend NestJS (compilado para JS)
+FROM node:18
+
+WORKDIR /app
+
+# Instalar dependências do sistema e OpenSSL
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar package.json e package-lock.json
+COPY package*.json ./
+COPY prisma ./prisma/
+COPY tsconfig.backend.json ./
+
+# Instalar dependências (inclui devDependencies)
+RUN npm ci
+
+"# Copiar código do backend"
+COPY backend ./backend/
+
+# Gerar cliente Prisma
+RUN npx prisma generate
+
+# Limpar build antigo e compilar TypeScript do backend (ESM)
+RUN rm -rf dist && node --version && npm run build:backend
+
+# Expor porta
+EXPOSE 4000
+
+# Iniciar a API Nest compilada (Node ESM)
+CMD ["node", "dist/backend/main.js"]
