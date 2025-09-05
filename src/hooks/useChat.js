@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import chatService from '../services/chatService';
+const BACKEND_URL = import.meta?.env?.VITE_BACKEND_URL || 'http://localhost:4000';
 
 export const useChat = (currentUserId, currentUserName, authToken) => {
   const [messages, setMessages] = useState({});
@@ -148,6 +149,38 @@ export const useChat = (currentUserId, currentUserName, authToken) => {
     return [userId1, userId2].sort().join('-');
   };
 
+  const loadOlderMessages = useCallback(async (partnerId) => {
+    const roomKey = getRoomKey(currentUserId, partnerId);
+    const existing = messages[roomKey] || [];
+    const before = existing.length > 0 ? existing[0].timestamp : undefined;
+    try {
+      const url = new URL(`${BACKEND_URL}/api/chat/messages`);
+      url.searchParams.set('partnerId', String(partnerId));
+      url.searchParams.set('limit', '50');
+      if (before) url.searchParams.set('before', String(before));
+      const headers = { 'content-type': 'application/json', 'x-user-id': String(currentUserId) };
+      if (authToken) headers['authorization'] = `Bearer ${authToken}`;
+      const r = await fetch(url.toString(), { headers });
+      const older = await r.json();
+      if (Array.isArray(older) && older.length > 0) {
+        const normalized = older.map(m => ({
+          id: m.id,
+          senderId: m.senderId,
+          senderName: m.senderId === currentUserId ? currentUserName : 'Outro',
+          receiverId: m.receiverId,
+          content: m.content,
+          timestamp: m.timestamp,
+          read: !!m.read
+        }));
+        const existingIds = new Set(existing.map(m => m.id));
+        const merged = [...normalized.filter(m => !existingIds.has(m.id)), ...existing];
+        setMessages(prev => ({ ...prev, [roomKey]: merged }));
+        return true;
+      }
+    } catch {}
+    return false;
+  }, [messages, currentUserId, currentUserName, authToken]);
+
   // Entrar em uma sala
   const joinRoom = useCallback((partnerId) => {
     chatService.joinRoom(partnerId);
@@ -201,6 +234,7 @@ export const useChat = (currentUserId, currentUserName, authToken) => {
     sendTyping,
     markAsRead,
     getConversationMessages,
-    requestNotificationPermission
+    requestNotificationPermission,
+    loadOlderMessages
   };
 };

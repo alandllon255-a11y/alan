@@ -30,7 +30,8 @@ const ChatView = ({ currentUser }) => {
     sendTyping,
     markAsRead,
     getConversationMessages,
-    requestNotificationPermission
+    requestNotificationPermission,
+    loadOlderMessages
   } = useChat(currentUser?.id, currentUser?.name);
 
   const [rateLimitedMsg, setRateLimitedMsg] = useState(null);
@@ -47,14 +48,12 @@ const ChatView = ({ currentUser }) => {
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
-    const onScroll = () => {
+    const onScroll = async () => {
       if (el.scrollTop < 50 && !isLoadingMore && hasMore && selectedUserId) {
         setIsLoadingMore(true);
-        // Placeholder: em produção, chamar backend com before=timestamp do primeiro item
-        setTimeout(() => {
-          setIsLoadingMore(false);
-          // setHasMore(false) quando não houver mais
-        }, 500);
+        const loaded = await loadOlderMessages(selectedUserId);
+        if (!loaded) setHasMore(false);
+        setIsLoadingMore(false);
       }
     };
     el.addEventListener('scroll', onScroll);
