@@ -273,6 +273,11 @@ const ChatView = ({ currentUser }) => {
               {isLoadingMore && (
                 <div className="text-center text-gray-400 text-sm">Carregando mais...</div>
               )}
+              {!isLoadingMore && hasMore && (
+                <div className="text-center">
+                  <button onClick={async () => { setIsLoadingMore(true); const loaded = await loadOlderMessages(selectedUserId); if (!loaded) setHasMore(false); setIsLoadingMore(false); }} className="px-3 py-1 text-xs bg-gray-700 text-white rounded hover:bg-gray-600">Carregar mais</button>
+                </div>
+              )}
               {rateLimitedMsg && (
                 <div className="mb-2 p-2 bg-yellow-900/30 border border-yellow-700/50 text-yellow-200 rounded text-sm">
                   {rateLimitedMsg}

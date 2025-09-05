@@ -1352,6 +1352,22 @@ const StackOverflowCloneMain = () => {
                 </button>
               </nav>
             </div>
+            <div className="hidden md:flex items-center gap-3">
+              <div className="flex items-center gap-3 bg-gray-800/50 border border-gray-700/30 rounded-xl px-3 py-1">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold flex items-center justify-center">
+                  {currentUser?.avatar || 'U'}
+                </div>
+                <div className="text-sm">
+                  <div className="text-white font-medium">{currentUser?.name}</div>
+                  <div className="text-gray-400 text-xs">{localStorage.getItem('jwt_token') ? 'Autenticado' : 'Visitante'}</div>
+                </div>
+              </div>
+              {localStorage.getItem('jwt_token') ? (
+                <button onClick={() => { localStorage.removeItem('jwt_token'); window.__JWT_TOKEN__=''; }} className="px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600">Sair</button>
+              ) : (
+                <button onClick={() => { setActiveTab('chat'); }} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-500">Entrar</button>
+              )}
+            </div>
           </div>
         )}
       </header>
