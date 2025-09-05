@@ -16,6 +16,13 @@ const Toast = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      onClose(id);
+    }, 300);
+  }, [id, onClose]);
+
   useEffect(() => {
     // Animar entrada
     const timer = setTimeout(() => setIsVisible(true), 100);
@@ -34,13 +41,6 @@ const Toast = ({
     
     return () => clearTimeout(timer);
   }, [duration, handleClose]);
-
-  const handleClose = useCallback(() => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      onClose(id);
-    }, 300);
-  }, [id, onClose]);
 
   const getIcon = () => {
     const icons = {
