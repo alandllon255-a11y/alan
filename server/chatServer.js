@@ -29,6 +29,7 @@ const canSendMessage = makeSocketLimiter({ key: 'chat:send', windowMs: 60_000, m
 
 // Toggle: encaminhar eventos para backend NestJS (BullMQ) em vez de in-memory
 const USE_NEST_GAMIFY = String(process.env.USE_NEST_GAMIFY || '').toLowerCase() === 'true';
+const USE_NEST_CHAT_PERSIST = String(process.env.USE_NEST_CHAT_PERSIST || '').toLowerCase() === 'true';
 const NEST_BASE_URL = process.env.NEST_BASE_URL || 'http://localhost:4000/api';
 
 // Armazenar usuários conectados e mensagens
@@ -65,19 +66,40 @@ io.on('connection', (socket) => {
   });
   
   // Entrar em uma sala de conversa específica
-  socket.on('joinRoom', ({ partnerId }) => {
+  socket.on('joinRoom', async ({ partnerId }) => {
     const roomKey = getRoomKey(socket.userId, partnerId);
     socket.join(roomKey);
     
-    // Enviar histórico de mensagens
-    const history = messageHistory.get(roomKey) || [];
+    // Enviar histórico de mensagens (in-memory + opcional backend)
+    let history = messageHistory.get(roomKey) || [];
+    if (USE_NEST_CHAT_PERSIST) {
+      try {
+        const r = await fetch(`${NEST_BASE_URL}/chat/messages?partnerId=${encodeURIComponent(partnerId)}&limit=50`, {
+          headers: { 'x-user-id': String(socket.userId) }
+        });
+        const arr = await r.json();
+        if (Array.isArray(arr)) {
+          history = arr.map(m => ({
+            id: m.id,
+            senderId: m.senderId,
+            senderName: m.senderId === socket.userId ? socket.userName : 'Outro',
+            receiverId: m.receiverId,
+            content: m.content,
+            timestamp: m.timestamp,
+            read: false
+          }));
+        }
+      } catch (err) {
+        console.warn('Falha ao carregar histórico do backend', err);
+      }
+    }
     socket.emit('messageHistory', history);
     
     console.log(`🚪 Usuário ${socket.userId} entrou na sala ${roomKey}`);
   });
   
   // Enviar mensagem
-  socket.on('sendMessage', ({ receiverId, content }) => {
+  socket.on('sendMessage', async ({ receiverId, content }) => {
     if (!canSendMessage(socket.id)) {
       socket.emit('rateLimited', { key: 'chat:send', retryAfterMs: 60_000 });
       return;
@@ -95,10 +117,20 @@ io.on('connection', (socket) => {
     };
     
     // Salvar no histórico
-    if (!messageHistory.has(roomKey)) {
-      messageHistory.set(roomKey, []);
-    }
+    if (!messageHistory.has(roomKey)) messageHistory.set(roomKey, []);
     messageHistory.get(roomKey).push(message);
+
+    if (USE_NEST_CHAT_PERSIST) {
+      try {
+        await fetch(`${NEST_BASE_URL}/chat/messages`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-user-id': String(socket.userId) },
+          body: JSON.stringify({ receiverId, content })
+        });
+      } catch (err) {
+        console.warn('Falha ao persistir mensagem no backend', err);
+      }
+    }
     
     // Enviar para todos na sala (incluindo o remetente)
     io.to(roomKey).emit('newMessage', message);

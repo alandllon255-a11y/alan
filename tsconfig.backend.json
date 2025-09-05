@@ -18,7 +18,9 @@
     "backend/**/*.ts"
   ],
   "exclude": [
-    "backend/gamification/worker.ts"
+    "backend/gamification/worker.ts",
+    "backend/**/__tests__/**",
+    "backend/**/*.test.ts"
   ]
 }
 
