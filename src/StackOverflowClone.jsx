@@ -991,7 +991,7 @@ const StackOverflowCloneMain = () => {
                         </div>
                       )}
                     </div>
-                    <div className="bg-gray-800 rounded-lg p-3 mb-4"><p className="text-xs text-gray-400">💡 <strong>Dicas para uma boa resposta:</strong> Seja específico, forneça exemplos de código quando relevante, cite fontes se necessário, e explique o "porquê" além do "como".</p></div>
+                    <div className="bg-gray-800 rounded-lg p-3 mb-4"><p className="text-xs text-gray-400">💡 <strong>Dicas para uma boa resposta:</strong> Seja específico, forneça exemplos de código quando relevante, cite fontes se necessário, e explique o &quot;porquê&quot; além do &quot;como&quot;.</p></div>
                     <div className="flex gap-3">
                       <button onClick={() => handleCreateAnswer(question.id, replyingTo)} disabled={!newAnswer.trim()} className={`px-6 py-3 rounded-lg font-semibold transition-all ${newAnswer.trim() ? 'bg-green-500 text-white hover:bg-green-600 transform hover:scale-105' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`}>📤 Publicar Resposta</button>
                       <button onClick={() => { setShowAnswerForm(null); setNewAnswer(""); setReplyingTo(null); setShowMarkdownPreview(false); }} className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-semibold">Cancelar</button>

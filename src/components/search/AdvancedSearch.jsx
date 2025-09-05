@@ -282,7 +282,7 @@ const AdvancedSearch = ({
         {/* Footer */}
         <div className="p-4 border-t border-gray-700 flex items-center justify-between">
           <div className="text-sm text-gray-400">
-            Use aspas para busca exata: "React hooks"
+            Use aspas para busca exata: &quot;React hooks&quot;
           </div>
           <div className="flex items-center gap-2">
             <button

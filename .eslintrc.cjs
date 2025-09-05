@@ -28,6 +28,7 @@ module.exports = {
     'import/no-unresolved': 'off',
     'unused-imports/no-unused-imports': 'error',
     'no-console': ['warn', { allow: ['warn', 'error', 'log'] }],
+    'no-warning-comments': 'off'
   },
   overrides: [
     {

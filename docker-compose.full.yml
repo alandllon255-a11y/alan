@@ -1,0 +1,101 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    container_name: devforum_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: devforum
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - devforum-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: devforum_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - devforum-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: devforum_backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=development
+      - BACKEND_PORT=4000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/devforum
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-super-secret-jwt-key
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app/backend
+      - ./prisma:/app/prisma
+      - ./tsconfig.backend.json:/app/tsconfig.backend.json
+    networks:
+      - devforum-network
+
+  chat-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.chat
+    container_name: devforum_chat
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - USE_NEST_GAMIFY=true
+      - NEST_BASE_URL=http://backend:4000/api
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./server:/app/server
+    depends_on:
+      - backend
+    networks:
+      - devforum-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: devforum_frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:3001
+      - VITE_CHAT_URL=http://localhost:3001
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+      - ./index.html:/app/index.html
+      - ./package.json:/app/package.json
+    depends_on:
+      - chat-server
+    networks:
+      - devforum-network
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  devforum-network:
+    driver: bridge
+
