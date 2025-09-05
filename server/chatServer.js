@@ -192,6 +192,16 @@ io.on('connection', (socket) => {
       userName: socket.userName,
       isTyping
     });
+
+    if (USE_NEST_CHAT_PERSIST) {
+      try {
+        fetch(`${NEST_BASE_URL}/chat/typing`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-internal-key': INTERNAL_API_KEY },
+          body: JSON.stringify({ partnerId: receiverId, isTyping, userId: socket.userId })
+        }).catch(() => {});
+      } catch {}
+    }
   });
   
   // Marcar mensagem como lida

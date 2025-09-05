@@ -144,6 +144,21 @@ export const useChat = (currentUserId, currentUserName, authToken) => {
     };
   }, [currentUserId]);
 
+  // Fetch unread counts do backend ao montar
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const url = `${BACKEND_URL}/api/chat/unread-counts`;
+        const headers = { 'content-type': 'application/json', 'x-user-id': String(currentUserId) };
+        if (authToken) headers['authorization'] = `Bearer ${authToken}`;
+        const r = await fetch(url, { headers });
+        const data = await r.json();
+        if (data && typeof data === 'object') setUnreadCounts((prev) => ({ ...prev, ...data }));
+      } catch {}
+    };
+    if (currentUserId) fetchUnread();
+  }, [currentUserId, authToken]);
+
   // Funções auxiliares
   const getRoomKey = (userId1, userId2) => {
     return [userId1, userId2].sort().join('-');
