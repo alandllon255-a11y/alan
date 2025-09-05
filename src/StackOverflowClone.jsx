@@ -736,8 +736,60 @@ const StackOverflowCloneMain = () => {
   );
 
   const UserProfile = ({ user, isOwnProfile = false }) => {
-    const profileUser = isOwnProfile ? currentUser : getUserProfile(viewingUserId);
-    const level = calculateLevel(profileUser.reputation);
+    const initialProfile = isOwnProfile ? currentUser : getUserProfile(viewingUserId);
+    const [profileUser, setProfileUser] = useState(initialProfile);
+    const [editDraft, setEditDraft] = useState({
+      name: initialProfile?.name || '',
+      username: initialProfile?.username || '',
+      avatarUrl: initialProfile?.avatarUrl || '',
+      bannerUrl: initialProfile?.bannerUrl || '',
+      bio: initialProfile?.bio || '',
+      location: initialProfile?.location || '',
+      website: initialProfile?.website || '',
+      company: initialProfile?.company || '',
+      socialGithub: initialProfile?.social?.github || '',
+      socialLinkedin: initialProfile?.social?.linkedin || '',
+      socialTwitter: initialProfile?.social?.twitter || ''
+    });
+
+    useEffect(() => {
+      const token = localStorage.getItem('jwt_token') || '';
+      const fetchOwn = async () => {
+        try {
+          const r = await fetch(`${BACKEND_URL}/api/users/profile`, { headers: { 'authorization': token ? `Bearer ${token}` : '' } });
+          const p = await r.json();
+          if (p && p.id) {
+            setProfileUser({
+              id: p.id,
+              name: p.name,
+              username: p.username,
+              avatarUrl: p.avatar_url,
+              bannerUrl: p.banner_url,
+              bio: p.bio,
+              location: p.location,
+              website: p.website,
+              company: p.company,
+              social: p.social || {},
+              reputation: p.reputation_points || 0,
+              settings: { profileVisibility: 'public', showLocation: true, showCompany: true, showSocial: true, accentColor: 'blue' },
+              joinedAt: new Date()
+            });
+          }
+        } catch {}
+      };
+      const fetchPublic = async () => {
+        try {
+          const r = await fetch(`${BACKEND_URL}/api/users/${encodeURIComponent(String(viewingUserId))}`);
+          const p = await r.json();
+          if (p && p.id) {
+            setProfileUser(prev => ({ ...prev, ...p }));
+          }
+        } catch {}
+      };
+      if (isOwnProfile) fetchOwn(); else fetchPublic();
+    }, [isOwnProfile, viewingUserId]);
+
+    const level = calculateLevel(profileUser.reputation || 0);
     return (
       <div className="min-h-screen bg-gray-900">
         <div className="container mx-auto px-4 py-4">
@@ -854,6 +906,51 @@ const StackOverflowCloneMain = () => {
             </div>
             <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
+                {isOwnProfile && editingProfile && (
+                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <h3 className="text-lg font-semibold text-white mb-4">Editar Perfil</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Nome" value={editDraft.name} onChange={(e)=>setEditDraft({...editDraft,name:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Username" value={editDraft.username} onChange={(e)=>setEditDraft({...editDraft,username:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Avatar URL" value={editDraft.avatarUrl} onChange={(e)=>setEditDraft({...editDraft,avatarUrl:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Banner URL" value={editDraft.bannerUrl} onChange={(e)=>setEditDraft({...editDraft,bannerUrl:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Localização" value={editDraft.location} onChange={(e)=>setEditDraft({...editDraft,location:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Website" value={editDraft.website} onChange={(e)=>setEditDraft({...editDraft,website:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Empresa" value={editDraft.company} onChange={(e)=>setEditDraft({...editDraft,company:e.target.value})} />
+                    </div>
+                    <textarea className="mt-3 w-full px-3 py-2 bg-gray-700 text-white rounded" placeholder="Bio" rows={4} value={editDraft.bio} onChange={(e)=>setEditDraft({...editDraft,bio:e.target.value})} />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="GitHub" value={editDraft.socialGithub} onChange={(e)=>setEditDraft({...editDraft,socialGithub:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="LinkedIn" value={editDraft.socialLinkedin} onChange={(e)=>setEditDraft({...editDraft,socialLinkedin:e.target.value})} />
+                      <input className="px-3 py-2 bg-gray-700 text-white rounded" placeholder="Twitter/X" value={editDraft.socialTwitter} onChange={(e)=>setEditDraft({...editDraft,socialTwitter:e.target.value})} />
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <button onClick={async ()=>{
+                        const token = localStorage.getItem('jwt_token')||'';
+                        const payload = {
+                          name: editDraft.name,
+                          username: editDraft.username,
+                          avatarUrl: editDraft.avatarUrl,
+                          bannerUrl: editDraft.bannerUrl,
+                          bio: editDraft.bio,
+                          location: editDraft.location,
+                          website: editDraft.website,
+                          company: editDraft.company,
+                          social: { github: editDraft.socialGithub, linkedin: editDraft.socialLinkedin, twitter: editDraft.socialTwitter }
+                        };
+                        try {
+                          const r = await fetch(`${BACKEND_URL}/api/users/profile`, { method:'PATCH', headers:{ 'content-type':'application/json', 'authorization': token?`Bearer ${token}`:'' }, body: JSON.stringify(payload) });
+                          const ok = await r.json();
+                          if (ok?.success) {
+                            setProfileUser(prev => ({ ...prev, ...payload }));
+                            setEditingProfile(false);
+                          }
+                        } catch {}
+                      }} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Salvar</button>
+                      <button onClick={()=>setEditingProfile(false)} className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600">Cancelar</button>
+                    </div>
+                  </div>
+                )}
                 {profileTab === 'questions' && (
                   <ProfileRecentQuestions
                     questions={questions}

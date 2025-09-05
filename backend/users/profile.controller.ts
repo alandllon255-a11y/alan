@@ -19,7 +19,7 @@ export class ProfileController {
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: {
+        select: ({
           id: true,
           email: true,
           name: true,
@@ -35,7 +35,7 @@ export class ProfileController {
           reputationPoints: true,
           currencyBalance: true,
           currentLevel: true,
-        },
+        } as unknown) as any,
       });
 
       if (!user) {
@@ -52,23 +52,24 @@ export class ProfileController {
         };
       }
 
+      const u: any = user as any;
       return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        username: user.username,
-        avatar_url: user.avatarUrl,
-        banner_url: user.bannerUrl,
-        bio: user.bio,
-        location: user.location,
-        website: user.website,
-        company: user.company,
-        social: user.social,
-        preferences: user.preferences,
-        reputation_points: user.reputationPoints,
-        currency_balance: user.currencyBalance,
-        current_level: user.currentLevel,
-        rank_title: rankTitleFromLevel(user.currentLevel),
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        username: u.username,
+        avatar_url: u.avatarUrl,
+        banner_url: u.bannerUrl,
+        bio: u.bio,
+        location: u.location,
+        website: u.website,
+        company: u.company,
+        social: u.social,
+        preferences: u.preferences,
+        reputation_points: u.reputationPoints,
+        currency_balance: u.currencyBalance,
+        current_level: u.currentLevel,
+        rank_title: rankTitleFromLevel(u.currentLevel),
         achievements: [],
       };
     } catch (e) {
@@ -111,7 +112,7 @@ export class ProfileController {
     const prisma = getPrisma();
     const user = await prisma.user.findUnique({
       where: { id },
-      select: {
+      select: ({
         id: true,
         name: true,
         username: true,
@@ -121,7 +122,7 @@ export class ProfileController {
         location: true,
         website: true,
         company: true,
-      }
+      } as unknown) as any,
     }).catch(() => null);
     if (!user) return { statusCode: 404, message: 'Not found' } as any;
     return user;
