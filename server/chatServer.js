@@ -34,6 +34,7 @@ const USE_JWT = String(process.env.USE_JWT || '').toLowerCase() === 'true';
 const USE_NEST_CHAT_PERSIST = String(process.env.USE_NEST_CHAT_PERSIST || '').toLowerCase() === 'true';
 const NEST_BASE_URL = process.env.NEST_BASE_URL || 'http://localhost:4000/api';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || '';
 
 // Armazenar usuários conectados e mensagens
 const connectedUsers = new Map();
@@ -201,6 +202,13 @@ io.on('connection', (socket) => {
       if (message) {
         message.read = true;
         io.to(roomKey).emit('messageRead', { messageId });
+        if (USE_NEST_CHAT_PERSIST) {
+          fetch(`${NEST_BASE_URL}/chat/messages/read`, {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json', 'x-internal-key': INTERNAL_API_KEY },
+            body: JSON.stringify({ messageId })
+          }).catch(() => {});
+        }
       }
     }
   });

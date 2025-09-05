@@ -13,6 +13,9 @@ const ChatView = ({ currentUser }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const typingTimeoutRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -40,6 +43,23 @@ const ChatView = ({ currentUser }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, selectedUserId]);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (el.scrollTop < 50 && !isLoadingMore && hasMore && selectedUserId) {
+        setIsLoadingMore(true);
+        // Placeholder: em produção, chamar backend com before=timestamp do primeiro item
+        setTimeout(() => {
+          setIsLoadingMore(false);
+          // setHasMore(false) quando não houver mais
+        }, 500);
+      }
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [isLoadingMore, hasMore, selectedUserId]);
 
   // Solicitar permissão de notificações
   useEffect(() => {
@@ -250,7 +270,10 @@ const ChatView = ({ currentUser }) => {
             </div>
 
             {/* Mensagens */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+              {isLoadingMore && (
+                <div className="text-center text-gray-400 text-sm">Carregando mais...</div>
+              )}
               {rateLimitedMsg && (
                 <div className="mb-2 p-2 bg-yellow-900/30 border border-yellow-700/50 text-yellow-200 rounded text-sm">
                   {rateLimitedMsg}
