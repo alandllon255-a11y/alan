@@ -5,17 +5,8 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    ecmaFeatures: { jsx: true },
-    project: ['./tsconfig.backend.json'],
-  },
   settings: {
-    react: {
-      version: 'detect',
-    },
+    react: { version: 'detect' },
   },
   plugins: [
     'react',
@@ -29,7 +20,6 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
     'plugin:import/recommended',
-    'plugin:@typescript-eslint/recommended',
     'prettier'
   ],
   rules: {
@@ -39,6 +29,30 @@ module.exports = {
     'unused-imports/no-unused-imports': 'error',
     'no-console': ['warn', { allow: ['warn', 'error', 'log'] }],
   },
+  overrides: [
+    {
+      files: ['**/*.ts', '**/*.tsx'],
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: ['./tsconfig.backend.json'],
+      },
+      extends: [
+        'plugin:@typescript-eslint/recommended'
+      ],
+      rules: {},
+    },
+    {
+      files: ['**/*.js', '**/*.jsx'],
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+      },
+      rules: {},
+    }
+  ],
   ignorePatterns: [
     'dist/',
     'node_modules/',
