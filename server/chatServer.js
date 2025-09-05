@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { publishEvent, startGamificationWorker } from './gamification.js';
+import jwt from 'jsonwebtoken';
 import { getUserStats, getAllUsersStats, markProfileComplete } from './state.js';
 import { rateLimit, makeSocketLimiter } from './rateLimit.js';
 
@@ -29,8 +30,10 @@ const canSendMessage = makeSocketLimiter({ key: 'chat:send', windowMs: 60_000, m
 
 // Toggle: encaminhar eventos para backend NestJS (BullMQ) em vez de in-memory
 const USE_NEST_GAMIFY = String(process.env.USE_NEST_GAMIFY || '').toLowerCase() === 'true';
+const USE_JWT = String(process.env.USE_JWT || '').toLowerCase() === 'true';
 const USE_NEST_CHAT_PERSIST = String(process.env.USE_NEST_CHAT_PERSIST || '').toLowerCase() === 'true';
 const NEST_BASE_URL = process.env.NEST_BASE_URL || 'http://localhost:4000/api';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
 // Armazenar usuários conectados e mensagens
 const connectedUsers = new Map();
@@ -41,6 +44,19 @@ const typingUsers = new Map(); // roomId -> Set of userIds
 const getRoomKey = (userId1, userId2) => {
   return [userId1, userId2].sort().join('-');
 };
+
+io.use((socket, next) => {
+  if (!USE_JWT) return next();
+  try {
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace('Bearer ', '');
+    if (!token) return next(new Error('Auth token missing'));
+    const decoded = jwt.verify(token, JWT_SECRET);
+    socket.authUser = decoded;
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 io.on('connection', (socket) => {
   console.log('✅ Novo usuário conectado:', socket.id);
