@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Search, X, 
   User, Hash, MessageSquare
@@ -81,13 +81,13 @@ const AdvancedSearch = ({
   }, [searchQuery, questions, users]);
 
   // Executar busca
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     onSearch({
       query: searchQuery,
       filters
     });
     onClose();
-  };
+  }, [onSearch, searchQuery, filters, onClose]);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -103,7 +103,7 @@ const AdvancedSearch = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showSuggestions]);
+  }, [isOpen, showSuggestions, onClose, handleSearch]);
 
   if (!isOpen) return null;
 

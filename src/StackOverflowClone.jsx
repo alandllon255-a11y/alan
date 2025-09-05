@@ -318,7 +318,7 @@ const StackOverflowCloneMain = () => {
     return sorted;
   }, [questions, searchQuery, selectedTags, sortBy]);
 
-  const addNotification = (type, title, message, priority = 'normal', actionUrl = '#') => {
+  const addNotification = useCallback((type, title, message, priority = 'normal', actionUrl = '#') => {
     const notification = {
       id: Date.now(), type, title, message, timestamp: new Date(), read: false, actionUrl, priority,
       avatar: getNotificationAvatar(type)
@@ -333,7 +333,7 @@ const StackOverflowCloneMain = () => {
     if (notificationSettings.desktop && type !== 'success') {
       console.log(`Desktop notification: ${title} - ${message}`);
     }
-  };
+  }, [notificationSettings.desktop, notificationSettings.showToasts, playNotificationSound]);
 
   const handleVoteQuestion = useCallback((questionId, voteType) => {
     setQuestions(prev => prev.map(q => {
@@ -503,7 +503,7 @@ const StackOverflowCloneMain = () => {
     setEditingAnswer(null);
   };
 
-  const playNotificationSound = () => {
+  const playNotificationSound = useCallback(() => {
     if (notificationSettings.sound) {
       try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -522,7 +522,7 @@ const StackOverflowCloneMain = () => {
         // Silenciosamente falhar se não conseguir criar o contexto de áudio
       }
     }
-  };
+  }, [notificationSettings.sound]);
 
   const createNotificationSound = (audioContext) => {
     const oscillator = audioContext.createOscillator();
@@ -665,7 +665,7 @@ const StackOverflowCloneMain = () => {
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [questions, notificationSettings?.votes]);
+  }, [questions, notificationSettings, currentUser, addNotification]);
 
   const handleProfileUpdate = (field, value) => {
     setCurrentUser(prev => ({ ...prev, [field]: value }));
@@ -884,7 +884,7 @@ const StackOverflowCloneMain = () => {
 
   const QuestionCard = ({ question, detailed = false }) => {
     const [expanded, setExpanded] = useState(detailed);
-    useEffect(() => { if (detailed) incrementViews(question.id); }, []);
+    useEffect(() => { if (detailed) incrementViews(question.id); }, [detailed, question.id]);
     return (
       <div className={`bg-gray-800 rounded-lg p-6 border transition-all ${detailed ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-gray-700 hover:border-gray-600'}`}>
         <div className="flex gap-4">
