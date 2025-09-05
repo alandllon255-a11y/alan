@@ -31,6 +31,8 @@ import { useTheme } from './hooks/useTheme.js';
  
 import { useChat } from './hooks/useChat.js';
 
+const BACKEND_URL = import.meta?.env?.VITE_BACKEND_URL || 'http://localhost:4000';
+
 const StackOverflowCloneMain = () => {
   // Definir currentUser
   const [currentUser, setCurrentUser] = useState({
@@ -58,7 +60,33 @@ const StackOverflowCloneMain = () => {
     markAsRead,
     getConversationMessages,
     requestNotificationPermission
-  } = useChat(currentUser.id, currentUser.name, window.__JWT_TOKEN__);
+  } = useChat(currentUser.id, currentUser.name, window.__JWT_TOKEN__ || localStorage.getItem('jwt_token'));
+
+  const [authTokenUi, setAuthTokenUi] = useState(localStorage.getItem('jwt_token') || '');
+  const [showLogin, setShowLogin] = useState(false);
+
+  const handleLogin = async () => {
+    try {
+      const r = await fetch(`${BACKEND_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: String(currentUser.id), name: currentUser.name })
+      });
+      const body = await r.json();
+      if (body?.token) {
+        localStorage.setItem('jwt_token', body.token);
+        setAuthTokenUi(body.token);
+        window.__JWT_TOKEN__ = body.token;
+        setShowLogin(false);
+      }
+    } catch {}
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwt_token');
+    setAuthTokenUi('');
+    window.__JWT_TOKEN__ = '';
+  };
 
   const [questions, setQuestions] = useState([
     {
@@ -1388,7 +1416,31 @@ const StackOverflowCloneMain = () => {
                 />
               )}
               {activeTab === "chat" && !showProfile && (
-                <ChatView currentUser={currentUser} />
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs text-gray-400">
+                      JWT: {authTokenUi ? 'ativo' : 'não autenticado'}
+                    </div>
+                    <div className="flex gap-2">
+                      {!authTokenUi ? (
+                        <button onClick={() => setShowLogin(true)} className="px-3 py-1 text-xs bg-blue-600 text-white rounded">Entrar</button>
+                      ) : (
+                        <button onClick={handleLogout} className="px-3 py-1 text-xs bg-gray-700 text-white rounded">Sair</button>
+                      )}
+                    </div>
+                  </div>
+                  <ChatView currentUser={currentUser} />
+                  {showLogin && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                      <div className="bg-gray-800 border border-gray-700 rounded p-4 w-full max-w-sm">
+                        <h3 className="text-white font-semibold mb-3">Login</h3>
+                        <div className="text-gray-400 text-sm mb-3">Gerar token JWT para o usuário atual</div>
+                        <button onClick={handleLogin} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-500">Entrar</button>
+                        <button onClick={() => setShowLogin(false)} className="w-full mt-2 bg-gray-700 text-white py-2 rounded hover:bg-gray-600">Cancelar</button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
