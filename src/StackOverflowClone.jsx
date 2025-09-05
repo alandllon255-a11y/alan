@@ -1434,8 +1434,31 @@ const StackOverflowCloneMain = () => {
                     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
                       <div className="bg-gray-800 border border-gray-700 rounded p-4 w-full max-w-sm">
                         <h3 className="text-white font-semibold mb-3">Login</h3>
-                        <div className="text-gray-400 text-sm mb-3">Gerar token JWT para o usuário atual</div>
-                        <button onClick={handleLogin} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-500">Entrar</button>
+                        <div className="text-gray-400 text-sm mb-3">Autentique-se para habilitar recursos protegidos</div>
+                        <div className="space-y-2 mb-3">
+                          <input id="login-email" placeholder="Email" className="w-full px-3 py-2 bg-gray-700 text-white rounded" />
+                          <input id="login-pass" placeholder="Senha" type="password" className="w-full px-3 py-2 bg-gray-700 text-white rounded" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={async () => {
+                            const email = document.getElementById('login-email')?.value || '';
+                            const password = document.getElementById('login-pass')?.value || '';
+                            try {
+                              const r = await fetch(`${BACKEND_URL}/api/auth/login-email`, {
+                                method: 'POST', headers: { 'content-type': 'application/json' },
+                                body: JSON.stringify({ email, password })
+                              });
+                              const body = await r.json();
+                              if (body?.token) {
+                                localStorage.setItem('jwt_token', body.token);
+                                setAuthTokenUi(body.token);
+                                window.__JWT_TOKEN__ = body.token;
+                                setShowLogin(false);
+                              }
+                            } catch {}
+                          }} className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-500">Entrar</button>
+                          <button onClick={handleLogin} className="flex-1 bg-purple-600 text-white py-2 rounded hover:bg-purple-500">Login rápido</button>
+                        </div>
                         <button onClick={() => setShowLogin(false)} className="w-full mt-2 bg-gray-700 text-white py-2 rounded hover:bg-gray-600">Cancelar</button>
                       </div>
                     </div>
