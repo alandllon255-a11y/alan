@@ -1,8 +1,13 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { getPrisma } from '../prisma.js';
 
+@ApiTags('leaderboard')
 @Controller('v1/leaderboard')
 export class LeaderboardController {
+  @ApiOperation({ summary: 'Leaderboard por tipo/período' })
+  @ApiQuery({ name: 'type', required: false, enum: ['rep','currency'] })
+  @ApiQuery({ name: 'period', required: false, enum: ['all_time'] })
   @Get()
   async getLeaderboard(@Query('type') type = 'rep', @Query('period') period = 'all_time') {
     const prisma = getPrisma();

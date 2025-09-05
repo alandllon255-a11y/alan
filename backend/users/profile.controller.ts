@@ -1,4 +1,5 @@
 import { Controller, Get, Request, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { getPrisma } from '../prisma.js';
 import { JwtGuard } from '../auth/jwt.guard.js';
 
@@ -10,8 +11,11 @@ function rankTitleFromLevel(level: number): string {
   return 'Arquiteto';
 }
 
+@ApiTags('users')
 @Controller('users')
 export class ProfileController {
+  @ApiOperation({ summary: 'Perfil do usuário autenticado' })
+  @ApiBearerAuth()
   @Get('profile')
   async getProfile(@Request() req) {
     const userId = (req.user?.id || req.headers['x-user-id'] || '7').toString();
@@ -88,6 +92,8 @@ export class ProfileController {
     }
   }
 
+  @ApiOperation({ summary: 'Atualizar perfil do usuário autenticado' })
+  @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Patch('profile')
   async patchProfile(@Request() req, @Body() body: any) {
@@ -107,6 +113,8 @@ export class ProfileController {
     }
   }
 
+  @ApiOperation({ summary: 'Perfil público por ID' })
+  @ApiParam({ name: 'id' })
   @Get(':id')
   async getPublicProfile(@Param('id') id: string) {
     const prisma = getPrisma();

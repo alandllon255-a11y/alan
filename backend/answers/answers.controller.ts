@@ -1,7 +1,10 @@
 import { Controller, Post, Param, Request } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AnswersService } from './answers.service.js';
 import { EventTriggerService } from '../gamification/event-trigger.service.js';
 
+@ApiTags('answers')
+@ApiBearerAuth()
 @Controller('answers')
 export class AnswersController {
   constructor(
@@ -9,6 +12,8 @@ export class AnswersController {
     private readonly events: EventTriggerService,
   ) {}
 
+  @ApiOperation({ summary: 'Upvote em resposta' })
+  @ApiParam({ name: 'id', description: 'ID da resposta' })
   @Post(':id/upvote')
   async upvoteAnswer(@Param('id') answerId: string, @Request() req) {
     const userId = req.user?.id || '7';
