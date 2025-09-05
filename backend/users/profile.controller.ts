@@ -1,5 +1,6 @@
-import { Controller, Get, Request } from '@nestjs/common';
+import { Controller, Get, Request, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { getPrisma } from '../prisma.js';
+import { JwtGuard } from '../auth/jwt.guard.js';
 
 function rankTitleFromLevel(level: number): string {
   if (level < 5) return 'Iniciante';
@@ -22,6 +23,15 @@ export class ProfileController {
           id: true,
           email: true,
           name: true,
+          username: true,
+          avatarUrl: true,
+          bannerUrl: true,
+          bio: true,
+          location: true,
+          website: true,
+          company: true,
+          social: true,
+          preferences: true,
           reputationPoints: true,
           currencyBalance: true,
           currentLevel: true,
@@ -46,6 +56,15 @@ export class ProfileController {
         id: user.id,
         email: user.email,
         name: user.name,
+        username: user.username,
+        avatar_url: user.avatarUrl,
+        banner_url: user.bannerUrl,
+        bio: user.bio,
+        location: user.location,
+        website: user.website,
+        company: user.company,
+        social: user.social,
+        preferences: user.preferences,
         reputation_points: user.reputationPoints,
         currency_balance: user.currencyBalance,
         current_level: user.currentLevel,
@@ -66,6 +85,46 @@ export class ProfileController {
         warning: 'DB indisponível, retornando valores padrão',
       };
     }
+  }
+
+  @UseGuards(JwtGuard)
+  @Patch('profile')
+  async patchProfile(@Request() req, @Body() body: any) {
+    const prisma = getPrisma();
+    const userId = (req.user?.id).toString();
+    const allowed = ['name','username','avatarUrl','bannerUrl','bio','location','website','company','social','preferences'];
+    const data: any = {};
+    for (const key of allowed) if (key in body) data[key] = body[key];
+    // Hard limits / sanitization basic
+    if (typeof data.bio === 'string' && data.bio.length > 1000) data.bio = data.bio.slice(0,1000);
+    if (typeof data.username === 'string') data.username = data.username.trim().toLowerCase().slice(0,32);
+    try {
+      const updated = await prisma.user.update({ where: { id: userId }, data });
+      return { success: true, id: updated.id };
+    } catch (e) {
+      return { success: false, error: 'update_failed' };
+    }
+  }
+
+  @Get(':id')
+  async getPublicProfile(@Param('id') id: string) {
+    const prisma = getPrisma();
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        avatarUrl: true,
+        bannerUrl: true,
+        bio: true,
+        location: true,
+        website: true,
+        company: true,
+      }
+    }).catch(() => null);
+    if (!user) return { statusCode: 404, message: 'Not found' } as any;
+    return user;
   }
 }
 
