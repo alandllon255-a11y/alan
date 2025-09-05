@@ -1,20 +1,17 @@
 // DevForum - StackOverflow Clone
 import { 
-  Search, TrendingUp, Clock, CheckCircle, ChevronDown, ChevronUp, MessageSquare, 
-  User, Award, Filter, X, Edit2, Trash2, Star, BookOpen, Zap, Target, 
-  Trophy, Code, Bell, MessageCircle as MessageCircleIcon, AtSign, ThumbsUp, ArrowLeft, 
-  Settings, Volume2, VolumeX, Eye, Bookmark, Heart, AlertCircle, Info, Check, Camera, 
-  MapPin, Link as LinkIcon, Calendar, Mail, Github, Linkedin, Twitter, Globe, Shield, Lock, 
-  Unlock, Activity, BarChart, PieChart, TrendingUp as TrendingUpIcon, Coffee, 
-  Briefcase, GraduationCap, Palette, Moon, Sun, Sparkles, Flame as Fire, Gem, Crown, Medal, 
-  Image as ImageIcon, Video as VideoIcon, MoreHorizontal, Users, UserPlus, ChevronLeft, ChevronRight,
-  GalleryHorizontal, ThumbsDown, Send, CheckCheck, GitBranch, PlusCircle, BookCopy, File, UploadCloud,
+  Search, Clock, CheckCircle, ChevronDown, ChevronUp, MessageSquare, 
+  User, Filter, X, Edit2, BookOpen, Zap, 
+  Trophy, Code, Bell, MessageCircle as MessageCircleIcon, ArrowLeft, 
+  Settings, Camera, 
+  MapPin, Link as LinkIcon, Calendar, Github, Linkedin, Twitter, Globe, Shield, Activity, BarChart, PieChart, Coffee, 
+  Briefcase, Moon, Sun, Users,
 
 } from 'lucide-react';
 
 
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ProfileRecentQuestions from './components/profile/ProfileRecentQuestions.jsx';
 import ProfileRecentAnswers from './components/profile/ProfileRecentAnswers.jsx';
 import ChatView from './components/chat/ChatView.jsx';
@@ -321,7 +318,7 @@ const StackOverflowCloneMain = () => {
     return sorted;
   }, [questions, searchQuery, selectedTags, sortBy]);
 
-  const addNotification = (type, title, message, priority = 'normal', actionUrl = '#') => {
+  const addNotification = useCallback((type, title, message, priority = 'normal', actionUrl = '#') => {
     const notification = {
       id: Date.now(), type, title, message, timestamp: new Date(), read: false, actionUrl, priority,
       avatar: getNotificationAvatar(type)
@@ -336,7 +333,7 @@ const StackOverflowCloneMain = () => {
     if (notificationSettings.desktop && type !== 'success') {
       console.log(`Desktop notification: ${title} - ${message}`);
     }
-  };
+  }, [notificationSettings.desktop, notificationSettings.showToasts, playNotificationSound]);
 
   const handleVoteQuestion = useCallback((questionId, voteType) => {
     setQuestions(prev => prev.map(q => {
@@ -506,7 +503,7 @@ const StackOverflowCloneMain = () => {
     setEditingAnswer(null);
   };
 
-  const playNotificationSound = () => {
+  const playNotificationSound = useCallback(() => {
     if (notificationSettings.sound) {
       try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -525,7 +522,7 @@ const StackOverflowCloneMain = () => {
         // Silenciosamente falhar se não conseguir criar o contexto de áudio
       }
     }
-  };
+  }, [notificationSettings.sound]);
 
   const createNotificationSound = (audioContext) => {
     const oscillator = audioContext.createOscillator();
@@ -668,7 +665,7 @@ const StackOverflowCloneMain = () => {
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [questions, notificationSettings?.votes]);
+  }, [questions, notificationSettings, currentUser, addNotification]);
 
   const handleProfileUpdate = (field, value) => {
     setCurrentUser(prev => ({ ...prev, [field]: value }));
@@ -887,7 +884,7 @@ const StackOverflowCloneMain = () => {
 
   const QuestionCard = ({ question, detailed = false }) => {
     const [expanded, setExpanded] = useState(detailed);
-    useEffect(() => { if (detailed) incrementViews(question.id); }, []);
+    useEffect(() => { if (detailed) incrementViews(question.id); }, [detailed, question.id]);
     return (
       <div className={`bg-gray-800 rounded-lg p-6 border transition-all ${detailed ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-gray-700 hover:border-gray-600'}`}>
         <div className="flex gap-4">
@@ -994,7 +991,7 @@ const StackOverflowCloneMain = () => {
                         </div>
                       )}
                     </div>
-                    <div className="bg-gray-800 rounded-lg p-3 mb-4"><p className="text-xs text-gray-400">💡 <strong>Dicas para uma boa resposta:</strong> Seja específico, forneça exemplos de código quando relevante, cite fontes se necessário, e explique o "porquê" além do "como".</p></div>
+                    <div className="bg-gray-800 rounded-lg p-3 mb-4"><p className="text-xs text-gray-400">💡 <strong>Dicas para uma boa resposta:</strong> Seja específico, forneça exemplos de código quando relevante, cite fontes se necessário, e explique o &quot;porquê&quot; além do &quot;como&quot;.</p></div>
                     <div className="flex gap-3">
                       <button onClick={() => handleCreateAnswer(question.id, replyingTo)} disabled={!newAnswer.trim()} className={`px-6 py-3 rounded-lg font-semibold transition-all ${newAnswer.trim() ? 'bg-green-500 text-white hover:bg-green-600 transform hover:scale-105' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`}>📤 Publicar Resposta</button>
                       <button onClick={() => { setShowAnswerForm(null); setNewAnswer(""); setReplyingTo(null); setShowMarkdownPreview(false); }} className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors font-semibold">Cancelar</button>

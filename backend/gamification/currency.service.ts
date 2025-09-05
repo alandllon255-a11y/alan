@@ -1,7 +1,14 @@
-import { getPrisma } from '../prisma';
+import { getPrisma } from '../prisma.js';
+import type { GamificationActionType, Prisma } from '@prisma/client';
 
 export class CurrencyService {
-  async credit(userId: string, amount: number, actionType: string, entityId?: string, metadata?: unknown) {
+  async credit(
+    userId: string,
+    amount: number,
+    actionType: GamificationActionType,
+    entityId?: string,
+    metadata?: Prisma.InputJsonValue
+  ) {
     const prisma = getPrisma();
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -11,11 +18,11 @@ export class CurrencyService {
       await tx.gamificationActionLog.create({
         data: {
           userId,
-          actionType: actionType as any,
+          actionType,
           repChange: 0,
           currencyChange: amount,
           relatedEntityId: entityId,
-          metadata: metadata ? (metadata as any) : undefined
+          metadata: metadata ?? undefined
         }
       });
     });
@@ -35,10 +42,10 @@ export class CurrencyService {
       await tx.gamificationActionLog.create({
         data: {
           userId,
-          actionType: 'UPVOTE_GIVEN' as any, // placeholder for a debit-specific action if needed
+          actionType: 'UPVOTE_GIVEN', // placeholder for a debit-specific action if needed
           repChange: 0,
           currencyChange: -amount,
-          metadata: { reason } as any
+          metadata: { reason } as unknown as Prisma.InputJsonValue
         }
       });
     });

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  CheckCircle, XCircle, AlertCircle, Info, 
-  X, Check, AlertTriangle 
+  CheckCircle, XCircle, Info, 
+  X, AlertTriangle 
 } from 'lucide-react';
 
 const Toast = ({ 
@@ -33,14 +33,14 @@ const Toast = ({
     }
     
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, handleClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsLeaving(true);
     setTimeout(() => {
       onClose(id);
     }, 300);
-  };
+  }, [id, onClose]);
 
   const getIcon = () => {
     const icons = {
@@ -134,7 +134,7 @@ const Toast = ({
         )}
       </div>
       
-      <style jsx>{`
+      <style>{`
         @keyframes shrink {
           from { width: 100%; }
           to { width: 0%; }

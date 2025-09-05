@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { getPrisma } from '../prisma';
+import { getPrisma } from '../prisma.js';
 
 @Controller('v1/leaderboard')
 export class LeaderboardController {

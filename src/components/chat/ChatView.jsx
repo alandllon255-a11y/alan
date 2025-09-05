@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageCircle as MessageCircleIcon, Send, Bell, BellOff, 
-  Circle, Search, Settings, MoreVertical, Paperclip,
-  Smile, Mic, Image as ImageIcon, X
+  Circle, Search, MoreVertical, Paperclip,
+  Smile
 } from 'lucide-react';
 import { useChat } from '../../hooks/useChat';
 

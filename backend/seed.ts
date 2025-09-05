@@ -31,10 +31,9 @@ async function main() {
   ]);
 
   // Tags
-  const [tagNode, tagJwt, tagReact] = await Promise.all([
-    prisma.tag.upsert({ where: { slug: 'node-js' }, update: {}, create: { slug: 'node-js', name: 'node.js' } }),
+  const [tagNode, tagJwt] = await Promise.all([
+    prisma.tag.upsert({ where: { slug: 'node' }, update: {}, create: { slug: 'node', name: 'node' } }),
     prisma.tag.upsert({ where: { slug: 'jwt' }, update: {}, create: { slug: 'jwt', name: 'jwt' } }),
-    prisma.tag.upsert({ where: { slug: 'react' }, update: {}, create: { slug: 'react', name: 'react' } }),
   ]);
 
   // Question

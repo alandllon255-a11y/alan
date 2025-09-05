@@ -5,22 +5,14 @@ import {
   Monitor, 
   Sun, 
   Moon, 
-  Volume2, 
-  VolumeX,
+  Volume2,
   Bell,
-  BellOff,
-  Keyboard,
   Database,
   Download,
   Upload,
   Trash2,
-  Check,
-  X,
   Settings as SettingsIcon,
-  User,
-  Shield,
-  Globe,
-  Zap
+  Shield
 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useToast } from '../hooks/useToast';

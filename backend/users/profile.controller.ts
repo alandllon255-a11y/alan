@@ -1,5 +1,5 @@
 import { Controller, Get, Request } from '@nestjs/common';
-import { getPrisma } from '../prisma';
+import { getPrisma } from '../prisma.js';
 
 function rankTitleFromLevel(level: number): string {
   if (level < 5) return 'Iniciante';

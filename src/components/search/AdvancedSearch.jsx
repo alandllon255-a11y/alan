@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Search, Filter, X, Clock, TrendingUp, 
-  User, Hash, Calendar, SortAsc, SortDesc,
-  Code, FileText, MessageSquare, Award
+  Search, X, 
+  User, Hash, MessageSquare
 } from 'lucide-react';
 
 const AdvancedSearch = ({ 
@@ -82,13 +81,13 @@ const AdvancedSearch = ({
   }, [searchQuery, questions, users]);
 
   // Executar busca
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     onSearch({
       query: searchQuery,
       filters
     });
     onClose();
-  };
+  }, [onSearch, searchQuery, filters, onClose]);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -104,7 +103,7 @@ const AdvancedSearch = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showSuggestions]);
+  }, [isOpen, showSuggestions, onClose, handleSearch]);
 
   if (!isOpen) return null;
 
@@ -283,7 +282,7 @@ const AdvancedSearch = ({
         {/* Footer */}
         <div className="p-4 border-t border-gray-700 flex items-center justify-between">
           <div className="text-sm text-gray-400">
-            Use aspas para busca exata: "React hooks"
+            Use aspas para busca exata: &quot;React hooks&quot;
           </div>
           <div className="flex items-center gap-2">
             <button
