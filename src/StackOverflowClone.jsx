@@ -759,6 +759,47 @@ const StackOverflowCloneMain = () => {
     setQuestions(prev => prev.map(q => q.id === questionId ? { ...q, views: q.views + 1 } : q));
   };
 
+  // Carregar detalhes da pergunta ao selecionar
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!selectedQuestion || !selectedQuestion.id) return;
+      const res = await apiService.getQuestion(selectedQuestion.id, currentUser.id);
+      if (!cancelled && res.ok && res.data) {
+        const q = res.data;
+        const answers = (q.answers || []).map((a) => ({
+          id: a.id,
+          content: a.content,
+          author: { id: a.author?.id || 'unknown', name: a.author?.name || 'Usuário', reputation: 0, avatar: (a.author?.name || 'U').slice(0, 2).toUpperCase() },
+          votes: (a.votes || []).reduce((acc, v) => acc + (v.type === 'UP' ? 1 : -1), 0),
+          isAccepted: Boolean(a.isAccepted),
+          createdAt: new Date(a.createdAt),
+          comments: (a.comments || []).map((c) => ({ id: c.id, author: c.author?.name || 'Usuário', content: c.content, createdAt: new Date(c.createdAt) })),
+          userVote: 0,
+          replies: [],
+        }));
+        const merged = {
+          id: q.id,
+          title: q.title,
+          content: q.content,
+          tags: q.questionTags?.map((qt) => qt.tag?.slug) || [],
+          author: { id: q.author?.id || 'unknown', name: q.author?.name || 'Usuário', reputation: 0, avatar: (q.author?.name || 'U').slice(0, 2).toUpperCase() },
+          votes: (q.votes || []).reduce((acc, v) => acc + (v.type === 'UP' ? 1 : -1), 0),
+          views: q.views ?? 0,
+          answers,
+          createdAt: new Date(q.createdAt),
+          hasAcceptedAnswer: Boolean(q.acceptedAnswerId),
+          userVote: 0,
+        };
+        setSelectedQuestion(merged);
+        setQuestions((prev) => prev.map((pq) => (pq.id === merged.id ? { ...pq, ...merged } : pq)));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedQuestion?.id]);
+
   const Tag = ({ name, count, selected, onClick }) => (
     <button onClick={onClick} className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${selected ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>
       {name} {count && <span className="ml-1 opacity-60">×{count}</span>}

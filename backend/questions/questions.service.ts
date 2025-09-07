@@ -77,7 +77,7 @@ export class QuestionsService {
           include: {
             author: { select: { id: true, name: true } },
             votes: { select: { id: true, type: true, userId: true } },
-            comments: true,
+            comments: { include: { author: { select: { id: true, name: true } } } },
           },
           orderBy: { createdAt: 'asc' },
         },
