@@ -40,6 +40,7 @@ export class QuestionsService {
     const orderBy: Prisma.QuestionOrderByWithRelationInput[] = [];
     if (sort === 'newest') orderBy.push({ createdAt: 'desc' });
     if (sort === 'views') orderBy.push({ views: 'desc' });
+    if (sort === 'votes') orderBy.push({ votes: { _count: 'desc' } } as any);
 
     const questions = await prisma.question.findMany({
       where,
