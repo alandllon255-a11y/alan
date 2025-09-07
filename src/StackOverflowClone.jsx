@@ -445,14 +445,23 @@ const StackOverflowCloneMain = () => {
 
   const renderMarkdown = (content) => {
     if (!content) return '';
-    let processed = content.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-2 py-1 rounded text-blue-400 text-sm font-mono">$1</code>');
-    processed = processed.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto my-2"><code class="text-green-400 text-sm font-mono">${escapeHtml(code)}</code></pre>`;
+    // Escape all HTML first to prevent XSS, then apply Markdown replacements
+    const safe = escapeHtml(content);
+    // Handle fenced code blocks first
+    let processed = safe.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      // 'code' is already escaped by 'safe'
+      return `<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto my-2"><code class="text-green-400 text-sm font-mono">${code}</code></pre>`;
     });
+    // Inline code
+    processed = processed.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-2 py-1 rounded text-blue-400 text-sm font-mono">$1</code>');
+    // Bold and italic
     processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
     processed = processed.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
-    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:underline" target="_blank">$1</a>');
+    // Links (add rel for security)
+    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
+    // Mentions
     processed = processed.replace(/@(\w+)/g, '<span class="text-blue-500 font-semibold">@$1</span>');
+    // Line breaks
     processed = processed.replace(/\n/g, '<br>');
     return processed;
   };
