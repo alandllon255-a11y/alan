@@ -60,7 +60,7 @@ npm run dev:all
 
 ## 📡 Como testar
 
-1. Acesse http://localhost:5178
+1. Acesse http://localhost:5173
 2. Clique em "Chat" no menu superior
 3. Digite um nome de usuário
 4. Comece a conversar!
@@ -167,7 +167,7 @@ kill -9 <PID>
 Verifique em `server/chatServer.js`:
 ```javascript
 cors: {
-  origin: "http://localhost:5178", // Deve corresponder ao frontend
+  origin: "http://localhost:5173", // Deve corresponder ao frontend
 }
 ```
 
