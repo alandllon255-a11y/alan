@@ -21,8 +21,8 @@ import { StoreController } from './store/store.controller.js';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(UserContextMiddleware).forRoutes('*');
-    consumer.apply(new RateLimitMiddleware(60_000, 100, 'answers')).forRoutes(AnswersController);
-    consumer.apply(new RateLimitMiddleware(60_000, 100, 'comments')).forRoutes(CommentsController);
+    consumer.apply(new RateLimitMiddleware(60_000, 100, 'answers').use).forRoutes(AnswersController);
+    consumer.apply(new RateLimitMiddleware(60_000, 100, 'comments').use).forRoutes(CommentsController);
   }
 }
 
