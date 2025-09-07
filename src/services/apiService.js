@@ -73,7 +73,7 @@ const apiService = {
 
   async searchQuestions({ q, limit = 20, offset = 0 } = {}, userId = '7') {
     try {
-      const data = await request(`/questions/search/q${toQuery({ q, limit, offset })}`, {
+      const data = await request(`/questions/search${toQuery({ q, limit, offset })}`, {
         method: 'GET',
         headers: { 'x-user-id': String(userId) },
       });

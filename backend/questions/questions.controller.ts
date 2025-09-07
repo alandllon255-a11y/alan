@@ -25,7 +25,7 @@ export class QuestionsController {
     return { success: true, data: result };
   }
 
-  @Get('search/q')
+  @Get('search')
   async search(
     @Query('q') q: string,
     @Query('limit') limit = '20',
