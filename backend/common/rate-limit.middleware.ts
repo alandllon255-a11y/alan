@@ -28,3 +28,22 @@ export class RateLimitMiddleware implements NestMiddleware {
   }
 }
 
+export function createRateLimiter(windowMs = 60_000, max = 60, key = 'global') {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const ip = (req.ip || (req.headers['x-forwarded-for'] as string) || (req.socket && req.socket.remoteAddress) || 'unknown').toString();
+    const bucketKey = `${key}:${ip}`;
+    if (!buckets[bucketKey]) buckets[bucketKey] = { ts: [] };
+    const arr = buckets[bucketKey].ts;
+    const t = now();
+    while (arr.length && t - arr[0] > windowMs) arr.shift();
+    if (arr.length >= max) {
+      const retryAfterMs = Math.max(0, windowMs - (t - arr[0]));
+      res.setHeader('Retry-After', Math.ceil(retryAfterMs / 1000));
+      res.status(429).json({ error: 'Too Many Requests', key, windowMs, max, retryAfterMs });
+      return;
+    }
+    arr.push(t);
+    next();
+  };
+}
+

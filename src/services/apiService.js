@@ -1,5 +1,9 @@
 const baseUrl = (import.meta.env && import.meta.env.VITE_NEST_URL) || 'http://localhost:4000/api';
 let authToken = '';
+try {
+  const saved = localStorage.getItem('devforum-token');
+  if (saved) authToken = saved;
+} catch {}
 
 async function request(path, options = {}) {
   const url = `${baseUrl}${path}`;
@@ -32,7 +36,7 @@ function toQuery(params = {}) {
 }
 
 const apiService = {
-  setToken(token) { authToken = token || ''; },
+  setToken(token) { authToken = token || ''; try { if (authToken) localStorage.setItem('devforum-token', authToken); else localStorage.removeItem('devforum-token'); } catch {} },
 
   async login(email, password) {
     try {
@@ -40,7 +44,7 @@ const apiService = {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      if (data?.accessToken) authToken = data.accessToken;
+      if (data?.accessToken) { authToken = data.accessToken; try { localStorage.setItem('devforum-token', authToken); } catch {} }
       return { ok: true, data };
     } catch (e) {
       return { ok: false, error: e };
@@ -53,7 +57,7 @@ const apiService = {
         method: 'POST',
         body: JSON.stringify({ refreshToken }),
       });
-      if (data?.accessToken) authToken = data.accessToken;
+      if (data?.accessToken) { authToken = data.accessToken; try { localStorage.setItem('devforum-token', authToken); } catch {} }
       return { ok: true, data };
     } catch (e) {
       return { ok: false, error: e };
