@@ -43,7 +43,7 @@ export class GamificationProcessor extends WorkerHost {
       if (rule.currency > 0) {
         await this.currency.credit(payload.userId, rule.currency, type, payload.targetId);
       } else {
-        await this.currency.debit(payload.userId, Math.abs(rule.currency), `${type}`);
+        await this.currency.debit(payload.userId, Math.abs(rule.currency), type);
       }
     }
   }

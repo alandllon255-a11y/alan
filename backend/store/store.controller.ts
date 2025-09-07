@@ -38,8 +38,8 @@ export class StoreController {
     if (!user) return { success: false, error: 'Usuário não encontrado' };
     if (user.currencyBalance < item.cost) return { success: false, error: 'Saldo insuficiente' };
 
-    // Debit and log
-    await this.currency.debit(userId, item.cost, `purchase:${item.id}`);
+    // Debit (no gamification action type here)
+    await this.currency.debit(userId, item.cost);
     await prisma.currencyTransaction.create({
       data: {
         userId,
