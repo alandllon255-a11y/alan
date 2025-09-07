@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { getPrisma } from '../prisma.js';
+import { getRedis } from '../redis.js';
 
 @Controller('v1/leaderboard')
 export class LeaderboardController {
@@ -42,6 +43,16 @@ export class LeaderboardController {
 
       // Aggregate via raw query for performance
       const selectField = type === 'currency' ? 'currency_change' : 'rep_change';
+      const cacheKey = `lb:${type}:${period}:${start.toISOString().slice(0,10)}`;
+      const redis = getRedis();
+      // Try cache first
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch {}
+
       const rows = await prisma.$queryRawUnsafe<Array<{ user_id: string; total: number }>>(
         `SELECT user_id, SUM(${selectField}) as total
            FROM gamification_action_log
@@ -67,7 +78,9 @@ export class LeaderboardController {
         currentLevel: byId.get(r.user_id)?.currentLevel ?? 1,
         periodTotal: Number(r.total ?? 0),
       }));
-      return { type, period, since: start.toISOString(), data };
+      const result = { type, period, since: start.toISOString(), data };
+      try { await redis.setex(cacheKey, 60, JSON.stringify(result)); } catch {}
+      return result;
     } catch (e) {
       return { type, period, data: [], warning: 'DB indisponível' };
     }

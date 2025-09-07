@@ -9,15 +9,19 @@ import { QuestionsController } from './questions/questions.controller.js';
 import { QuestionsService } from './questions/questions.service.js';
 import { CommentsController } from './comments/comments.controller.js';
 import { HealthController } from './health/health.controller.js';
+import { RateLimitMiddleware } from './common/rate-limit.middleware.js';
+import { AuthController } from './auth/auth.controller.js';
 
 @Module({
   imports: [GamificationModule],
-  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController, CommentsController, HealthController],
+  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController, CommentsController, HealthController, AuthController],
   providers: [AnswersService, QuestionsService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(UserContextMiddleware).forRoutes('*');
+    consumer.apply(new RateLimitMiddleware(60_000, 100, 'answers')).forRoutes(AnswersController);
+    consumer.apply(new RateLimitMiddleware(60_000, 100, 'comments')).forRoutes(CommentsController);
   }
 }
 

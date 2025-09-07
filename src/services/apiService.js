@@ -1,10 +1,12 @@
 const baseUrl = (import.meta.env && import.meta.env.VITE_NEST_URL) || 'http://localhost:4000/api';
+let authToken = '';
 
 async function request(path, options = {}) {
   const url = `${baseUrl}${path}`;
   const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...(options.headers || {}),
     },
     ...options,
@@ -30,6 +32,33 @@ function toQuery(params = {}) {
 }
 
 const apiService = {
+  setToken(token) { authToken = token || ''; },
+
+  async login(email, password) {
+    try {
+      const data = await request('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+      if (data?.accessToken) authToken = data.accessToken;
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: e };
+    }
+  },
+
+  async refresh(refreshToken) {
+    try {
+      const data = await request('/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (data?.accessToken) authToken = data.accessToken;
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: e };
+    }
+  },
   async listQuestions({ q, tags, sort } = {}, userId = '7') {
     try {
       const data = await request(`/questions${toQuery({ q, tags, sort })}`, {
