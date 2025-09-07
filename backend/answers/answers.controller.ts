@@ -22,6 +22,17 @@ export class AnswersController {
     }
     return result;
   }
+
+  @Post(':id/downvote')
+  async downvoteAnswer(@Param('id') answerId: string, @Request() req) {
+    const userId = req.user?.id || '7';
+    const ownerId = await this.answers.getAnswerAuthorId(answerId);
+    if (ownerId === userId) {
+      return { success: false, error: 'Você não pode votar na própria resposta' };
+    }
+    const result = await this.answers.downvote(userId, answerId);
+    return result;
+  }
 }
 
 

@@ -7,10 +7,11 @@ import { LeaderboardController } from './leaderboard/leaderboard.controller.js';
 import { UserContextMiddleware } from './common/user.middleware.js';
 import { QuestionsController } from './questions/questions.controller.js';
 import { QuestionsService } from './questions/questions.service.js';
+import { CommentsController } from './comments/comments.controller.js';
 
 @Module({
   imports: [GamificationModule],
-  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController],
+  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController, CommentsController],
   providers: [AnswersService, QuestionsService],
 })
 export class AppModule implements NestModule {
