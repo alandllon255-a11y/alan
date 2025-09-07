@@ -25,7 +25,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const doc = SwaggerModule.createDocument(app, cfg);
-  SwaggerModule.setup('docs', app, doc);
+  SwaggerModule.setup('api/docs', app, doc);
   const port = Number(process.env.BACKEND_PORT || 4000);
   await app.listen(port);
   // eslint-disable-next-line no-console
