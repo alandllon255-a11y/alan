@@ -19,6 +19,7 @@ export class AnswersController {
     const result = await this.answers.upvote(userId, answerId);
     if (result?.success) {
       await this.events.publish('ANSWER_UPVOTED', { userId, targetId: answerId, targetOwnerId: ownerId });
+      await this.events.publish('UPVOTE_GIVEN', { userId, targetId: answerId, targetOwnerId: ownerId });
     }
     return result;
   }
@@ -31,6 +32,9 @@ export class AnswersController {
       return { success: false, error: 'Você não pode votar na própria resposta' };
     }
     const result = await this.answers.downvote(userId, answerId);
+    if (result?.success) {
+      await this.events.publish('DOWNVOTE_GIVEN', { userId, targetId: answerId, targetOwnerId: ownerId });
+    }
     return result;
   }
 }
