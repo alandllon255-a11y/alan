@@ -386,24 +386,30 @@ const StackOverflowCloneMain = () => {
     }
   }, [currentUser, notificationSettings, addNotification, error]);
 
-  const handleVoteAnswer = (questionId, answerId, voteType) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        return { ...q, answers: q.answers.map(a => {
-          if (a.id === answerId) {
-            const currentVote = a.userVote || 0;
-            let newVote = 0; let voteDiff = 0;
-            if (voteType === 1) { newVote = currentVote === 1 ? 0 : 1; voteDiff = newVote - currentVote; }
-            else { newVote = currentVote === -1 ? 0 : -1; voteDiff = newVote - currentVote; }
-            if (voteDiff > 0 && a.author.id !== currentUser?.id && notificationSettings.votes) {
-              addNotification('vote', 'Novo voto positivo', `Sua resposta recebeu um voto positivo`, 'low', `#answer-${answerId}`);
+  const handleVoteAnswer = async (questionId, answerId, voteType) => {
+    const type = voteType === 1 ? 'UP' : 'DOWN';
+    const res = await apiService.voteAnswer(answerId, type, currentUser.id);
+    if (res.ok) {
+      setQuestions(prev => prev.map(q => {
+        if (q.id === questionId) {
+          return { ...q, answers: q.answers.map(a => {
+            if (a.id === answerId) {
+              const currentVote = a.userVote || 0;
+              let newVote = 0; let voteDiff = 0;
+              if (voteType === 1) { newVote = currentVote === 1 ? 0 : 1; voteDiff = newVote - currentVote; }
+              else { newVote = currentVote === -1 ? 0 : -1; voteDiff = newVote - currentVote; }
+              if (voteDiff > 0 && a.author.id !== currentUser?.id && notificationSettings.votes) {
+                addNotification('vote', 'Novo voto positivo', `Sua resposta recebeu um voto positivo`, 'low', `#answer-${answerId}`);
+              }
+              return { ...a, votes: a.votes + voteDiff, userVote: newVote };
             }
-            return { ...a, votes: a.votes + voteDiff, userVote: newVote };
-          }
-          return a; }) };
-      }
-      return q;
-    }));
+            return a; }) };
+        }
+        return q;
+      }));
+    } else {
+      error('Falha ao votar resposta', res.error?.message || '');
+    }
   };
 
   const handleAcceptAnswer = async (questionId, answerId) => {
@@ -519,20 +525,26 @@ const StackOverflowCloneMain = () => {
     }
   };
 
-  const handleAddComment = (questionId, answerId, comment) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        return { ...q, answers: q.answers.map(a => {
-          if (a.id === answerId) {
-            if (a.author.id !== currentUser?.id && notificationSettings.comments) {
-              addNotification('comment', 'Novo comentário', `${currentUser?.name} comentou em sua resposta: "${comment.substring(0, 50)}..."`, 'normal', `#answer-${answerId}`);
+  const handleAddComment = async (questionId, answerId, comment) => {
+    if (!comment || !comment.trim()) return;
+    const res = await apiService.createComment({ content: comment, answerId }, currentUser.id);
+    if (res.ok) {
+      setQuestions(prev => prev.map(q => {
+        if (q.id === questionId) {
+          return { ...q, answers: q.answers.map(a => {
+            if (a.id === answerId) {
+              if (a.author.id !== currentUser?.id && notificationSettings.comments) {
+                addNotification('comment', 'Novo comentário', `${currentUser?.name} comentou em sua resposta: "${comment.substring(0, 50)}..."`, 'normal', `#answer-${answerId}`);
+              }
+              return { ...a, comments: [...a.comments, { id: res.data?.id || Date.now(), author: currentUser?.name, content: comment, createdAt: new Date() }] };
             }
-            return { ...a, comments: [...a.comments, { id: Date.now(), author: currentUser?.name, content: comment, createdAt: new Date() }] };
-          }
-          return a; }) };
-      }
-      return q;
-    }));
+            return a; }) };
+        }
+        return q;
+      }));
+    } else {
+      error('Falha ao comentar', res.error?.message || '');
+    }
   };
 
   const handleEditAnswer = (questionId, answerId, newContent) => {

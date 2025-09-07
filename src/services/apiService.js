@@ -93,6 +93,32 @@ const apiService = {
     }
   },
 
+  async voteAnswer(answerId, type, userId = '7') {
+    try {
+      const path = type === 'UP' ? `/answers/${encodeURIComponent(answerId)}/upvote` : `/answers/${encodeURIComponent(answerId)}/downvote`;
+      const data = await request(path, {
+        method: 'POST',
+        headers: { 'x-user-id': String(userId) },
+      });
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: e };
+    }
+  },
+
+  async createComment({ content, questionId, answerId }, userId = '7') {
+    try {
+      const data = await request('/comments', {
+        method: 'POST',
+        headers: { 'x-user-id': String(userId) },
+        body: JSON.stringify({ content, questionId, answerId }),
+      });
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: e };
+    }
+  },
+
   async acceptAnswer(questionId, answerId, userId = '7') {
     try {
       const data = await request(`/questions/${encodeURIComponent(questionId)}/accept/${encodeURIComponent(answerId)}`, {
