@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, Request, Patch } from '@nestjs/common';
 import { QuestionsService } from './questions.service.js';
+import { CreateQuestionDto, AddAnswerDto, VoteDto } from './dto.js';
 
 @Controller('questions')
 export class QuestionsController {
@@ -10,9 +11,11 @@ export class QuestionsController {
     @Query('q') q?: string,
     @Query('tags') tagsCsv?: string,
     @Query('sort') sort?: 'votes' | 'newest' | 'views',
+    @Query('limit') limit = '20',
+    @Query('offset') offset = '0',
   ) {
     const tags = tagsCsv ? tagsCsv.split(',').map((t) => t.trim()).filter(Boolean) : [];
-    return this.questions.list({ search: q, tags, sort });
+    return this.questions.list({ search: q, tags, sort, limit: Number(limit), offset: Number(offset) });
   }
 
   @Get(':id')
@@ -23,11 +26,8 @@ export class QuestionsController {
   }
 
   @Post()
-  async create(@Request() req: any, @Body() body: { title: string; content: string; tags?: string[] }) {
+  async create(@Request() req: any, @Body() body: CreateQuestionDto) {
     const userId = req.user?.id?.toString() ?? '7';
-    if (!body?.title || !body?.content) {
-      return { success: false, error: 'Título e conteúdo são obrigatórios' };
-    }
     const created = await this.questions.create(userId, {
       title: body.title,
       content: body.content,
@@ -37,19 +37,15 @@ export class QuestionsController {
   }
 
   @Post(':id/answers')
-  async addAnswer(@Param('id') questionId: string, @Request() req: any, @Body() body: { content: string; parentAnswerId?: string }) {
+  async addAnswer(@Param('id') questionId: string, @Request() req: any, @Body() body: AddAnswerDto) {
     const userId = req.user?.id?.toString() ?? '7';
-    if (!body?.content) return { success: false, error: 'Conteúdo é obrigatório' };
     const ans = await this.questions.addAnswer(userId, questionId, body.content, body.parentAnswerId);
     return { success: true, id: ans.id };
   }
 
   @Post(':id/vote')
-  async vote(@Param('id') questionId: string, @Request() req: any, @Body() body: { type: 'UP' | 'DOWN' }) {
+  async vote(@Param('id') questionId: string, @Request() req: any, @Body() body: VoteDto) {
     const userId = req.user?.id?.toString() ?? '7';
-    if (!body?.type || (body.type !== 'UP' && body.type !== 'DOWN')) {
-      return { success: false, error: 'Tipo de voto inválido' };
-    }
     const result = await this.questions.voteQuestion(userId, questionId, body.type);
     return { success: true, changed: result.changed };
   }

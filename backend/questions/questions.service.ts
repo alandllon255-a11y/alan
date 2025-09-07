@@ -13,9 +13,9 @@ type CreateQuestionInput = {
 export class QuestionsService {
   constructor(private readonly events: EventTriggerService) {}
 
-  async list(params: { search?: string; tags?: string[]; sort?: 'votes' | 'newest' | 'views' }) {
+  async list(params: { search?: string; tags?: string[]; sort?: 'votes' | 'newest' | 'views'; limit?: number; offset?: number }) {
     const prisma = getPrisma();
-    const { search, tags, sort = 'newest' } = params || {};
+    const { search, tags, sort = 'newest', limit = 20, offset = 0 } = params || {};
 
     const where: Prisma.QuestionWhereInput = {
       AND: [
@@ -44,7 +44,8 @@ export class QuestionsService {
     const questions = await prisma.question.findMany({
       where,
       orderBy: orderBy.length ? orderBy : [{ createdAt: 'desc' }],
-      take: 100,
+      take: Math.min(Math.max(limit, 1), 100),
+      skip: Math.max(offset, 0),
       include: {
         author: { select: { id: true, name: true, email: true } },
         questionTags: { include: { tag: { select: { slug: true, name: true } } } },
