@@ -11,10 +11,11 @@ import { CommentsController } from './comments/comments.controller.js';
 import { HealthController } from './health/health.controller.js';
 import { RateLimitMiddleware } from './common/rate-limit.middleware.js';
 import { AuthController } from './auth/auth.controller.js';
+import { StoreController } from './store/store.controller.js';
 
 @Module({
   imports: [GamificationModule],
-  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController, CommentsController, HealthController, AuthController],
+  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController, CommentsController, HealthController, AuthController, StoreController],
   providers: [AnswersService, QuestionsService],
 })
 export class AppModule implements NestModule {
