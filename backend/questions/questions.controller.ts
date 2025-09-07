@@ -18,7 +18,7 @@ export class QuestionsController {
     return this.questions.list({ search: q, tags, sort, limit: Number(limit), offset: Number(offset) });
   }
 
-  @Get(':id')
+  @Get(':id([0-9a-fA-F-]{36})')
   async getById(@Param('id') id: string) {
     const result = await this.questions.getById(id);
     if (!result) return { success: false, error: 'Pergunta não encontrada' };
