@@ -25,6 +25,17 @@ export class QuestionsController {
     return { success: true, data: result };
   }
 
+  @Get('search/q')
+  async search(
+    @Query('q') q: string,
+    @Query('limit') limit = '20',
+    @Query('offset') offset = '0',
+  ) {
+    if (!q || !q.trim()) return { success: true, data: [] };
+    const data = await this.questions.search(q, Number(limit), Number(offset));
+    return { success: true, data };
+  }
+
   @Post()
   async create(@Request() req: any, @Body() body: CreateQuestionDto) {
     const userId = req.user?.id?.toString() ?? '7';

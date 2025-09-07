@@ -629,57 +629,27 @@ const StackOverflowCloneMain = () => {
   };
 
   // Função para busca avançada
-  const handleAdvancedSearch = (searchParams) => {
+  const handleAdvancedSearch = async (searchParams) => {
     const { query, filters } = searchParams;
-    
-    // Aplicar filtros
-    let filtered = questions;
-    
-    if (filters.type === 'questions' || filters.type === 'all') {
-      if (query) {
-        filtered = filtered.filter(q => 
-          q.title.toLowerCase().includes(query.toLowerCase()) ||
-          q.content.toLowerCase().includes(query.toLowerCase())
-        );
-      }
-      
-      // Filtros adicionais
-      if (filters.hasAcceptedAnswer !== null) {
-        filtered = filtered.filter(q => q.hasAcceptedAnswer === filters.hasAcceptedAnswer);
-      }
-      
-      if (filters.minVotes > 0) {
-        filtered = filtered.filter(q => q.votes >= filters.minVotes);
-      }
-      
-      if (filters.minViews > 0) {
-        filtered = filtered.filter(q => q.views >= filters.minViews);
-      }
-      
-      // Ordenação
-      switch (filters.sortBy) {
-        case 'newest':
-          filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          break;
-        case 'oldest':
-          filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          break;
-        case 'votes':
-          filtered.sort((a, b) => b.votes - a.votes);
-          break;
-        case 'views':
-          filtered.sort((a, b) => b.views - a.views);
-          break;
-        default: // relevance
-          // Manter ordenação atual
-          break;
-      }
-    }
-    
-    // Atualizar resultados
     setSearchQuery(query);
-    // TODO: Implementar sistema de resultados de busca
-    console.log('Busca avançada:', { query, filters, results: filtered.length });
+    if (!query || !query.trim()) return;
+    const res = await apiService.searchQuestions({ q: query, limit: 50, offset: 0 }, currentUser.id);
+    if (res.ok) {
+      const mapped = (res.data || []).map((q) => ({
+        id: q.id,
+        title: q.title,
+        content: q.content,
+        tags: [],
+        author: { id: 'unknown', name: 'Usuário', reputation: 0, avatar: 'US' },
+        votes: 0,
+        views: q.views || 0,
+        answers: [],
+        createdAt: q.createdAt ? new Date(q.createdAt) : new Date(),
+        hasAcceptedAnswer: false,
+        userVote: 0,
+      }));
+      setQuestions(mapped);
+    }
   };
   const getTimeAgo = (timestamp) => {
     const seconds = Math.floor((new Date() - timestamp) / 1000);

@@ -71,6 +71,18 @@ const apiService = {
     }
   },
 
+  async searchQuestions({ q, limit = 20, offset = 0 } = {}, userId = '7') {
+    try {
+      const data = await request(`/questions/search/q${toQuery({ q, limit, offset })}`, {
+        method: 'GET',
+        headers: { 'x-user-id': String(userId) },
+      });
+      return { ok: true, data: data?.data ?? [] };
+    } catch (e) {
+      return { ok: false, error: e };
+    }
+  },
+
   async getQuestion(id, userId = '7') {
     try {
       const data = await request(`/questions/${encodeURIComponent(id)}`, {

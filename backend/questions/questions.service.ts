@@ -67,6 +67,33 @@ export class QuestionsService {
     }));
   }
 
+  async search(q: string, limit = 20, offset = 0) {
+    const prisma = getPrisma();
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safeOffset = Math.max(offset, 0);
+
+    // Raw FTS using Postgres to_tsvector/plainto_tsquery (no extra extension required)
+    const rows = await prisma.$queryRawUnsafe<Array<{ id: string; title: string; content: string; created_at: Date; views: number; rank: number }>>(
+      `SELECT q.id, q.title, q.content, q.created_at, q.views,
+              ts_rank(to_tsvector('simple', coalesce(q.title,'') || ' ' || coalesce(q.content,'')), plainto_tsquery('simple', $1)) as rank
+         FROM questions q
+        WHERE to_tsvector('simple', coalesce(q.title,'') || ' ' || coalesce(q.content,'')) @@ plainto_tsquery('simple', $1)
+        ORDER BY rank DESC, q.created_at DESC
+        LIMIT $2 OFFSET $3`,
+      q,
+      safeLimit,
+      safeOffset
+    );
+
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      content: r.content,
+      createdAt: r.created_at,
+      views: r.views,
+    }));
+  }
+
   async getById(questionId: string) {
     const prisma = getPrisma();
     const q = await prisma.question.findUnique({
