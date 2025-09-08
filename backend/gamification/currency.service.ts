@@ -28,7 +28,12 @@ export class CurrencyService {
     });
   }
 
-  async debit(userId: string, amount: number, reason: string) {
+  async debit(
+    userId: string,
+    amount: number,
+    actionType?: GamificationActionType,
+    metadata?: Prisma.InputJsonValue
+  ) {
     const prisma = getPrisma();
     await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId }, select: { currencyBalance: true } });
@@ -39,15 +44,19 @@ export class CurrencyService {
         where: { id: userId },
         data: { currencyBalance: { decrement: amount } }
       });
-      await tx.gamificationActionLog.create({
-        data: {
-          userId,
-          actionType: 'UPVOTE_GIVEN', // placeholder for a debit-specific action if needed
-          repChange: 0,
-          currencyChange: -amount,
-          metadata: { reason } as unknown as Prisma.InputJsonValue
-        }
-      });
+
+      // Only log to gamification action log when it's tied to a gamification action
+      if (actionType) {
+        await tx.gamificationActionLog.create({
+          data: {
+            userId,
+            actionType,
+            repChange: 0,
+            currencyChange: -amount,
+            metadata: metadata ?? undefined
+          }
+        });
+      }
     });
   }
 }

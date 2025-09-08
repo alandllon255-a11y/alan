@@ -102,7 +102,7 @@ app.use(cors());
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5178",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
@@ -181,7 +181,7 @@ server.listen(PORT, () => {
 
 ## Como Testar o Chat Atual
 
-1. Acesse http://localhost:5178
+1. Acesse http://localhost:5173
 2. Faça login com qualquer usuário (simulado)
 3. Clique no ícone de chat no menu lateral
 4. Digite um nome de usuário para entrar

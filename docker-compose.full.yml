@@ -62,6 +62,7 @@ services:
       - PORT=3001
       - USE_NEST_GAMIFY=true
       - NEST_BASE_URL=http://backend:4000/api
+      - FRONTEND_ORIGIN=http://localhost:5173
     ports:
       - "3001:3001"
     volumes:
@@ -80,6 +81,7 @@ services:
     environment:
       - VITE_API_URL=http://localhost:3001
       - VITE_CHAT_URL=http://localhost:3001
+      - VITE_NEST_URL=http://localhost:4000/api
     ports:
       - "5173:5173"
     volumes:

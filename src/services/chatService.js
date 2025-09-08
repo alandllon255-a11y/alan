@@ -1,4 +1,5 @@
 import socketIoClient from 'socket.io-client';
+const CHAT_URL = (import.meta.env && import.meta.env.VITE_CHAT_URL) || 'http://localhost:3001';
 
 class ChatService {
   constructor() {
@@ -25,7 +26,7 @@ class ChatService {
       }
 
       this.currentUser = { id: userId, name: userName };
-      this.socket = socketIoClient('http://localhost:3001', {
+      this.socket = socketIoClient(CHAT_URL, {
         transports: ['websocket'],
         reconnection: true,
         reconnectionAttempts: 5,

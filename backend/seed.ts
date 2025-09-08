@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { PrismaClient, VoteType, NotificationType, NotificationPriority, MediaType, TransactionType, GamificationActionType } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -11,7 +12,7 @@ async function main() {
       update: {},
       create: {
         email: 'joao@example.com',
-        password: 'password123',
+        password: await bcrypt.hash('password123', 10),
         name: 'João Silva',
         avatarUrl: null,
         bio: 'Desenvolvedor full-stack apaixonado por Node.js',
@@ -22,7 +23,7 @@ async function main() {
       update: {},
       create: {
         email: 'maria@example.com',
-        password: 'password123',
+        password: await bcrypt.hash('password123', 10),
         name: 'Maria Santos',
         avatarUrl: null,
         bio: 'Frontend engineer focada em React e UX',

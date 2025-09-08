@@ -30,6 +30,7 @@ import { useTheme } from './hooks/useTheme.js';
 
  
 import { useChat } from './hooks/useChat.js';
+import apiService from './services/apiService.js';
 
 const StackOverflowCloneMain = () => {
   // Definir currentUser
@@ -190,6 +191,34 @@ const StackOverflowCloneMain = () => {
     }
   ]);
 
+  // Carregar perguntas do backend ao iniciar
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await apiService.listQuestions({}, currentUser.id);
+      if (!cancelled && res.ok && Array.isArray(res.data)) {
+        // Adaptar para o shape usado no front
+        const mapped = res.data.map((q) => ({
+          id: q.id,
+          title: q.title,
+          content: q.content,
+          tags: q.tags || q.questionTags?.map((qt) => qt.tag?.slug) || [],
+          author: { id: q.author?.id || 'unknown', name: q.author?.name || 'Usuário', reputation: 0, avatar: (q.author?.name || 'U').slice(0, 2).toUpperCase() },
+          votes: q.votes ?? q._count?.votes ?? 0,
+          views: q.views ?? 0,
+          answers: [],
+          createdAt: q.createdAt ? new Date(q.createdAt) : new Date(),
+          hasAcceptedAnswer: Boolean(q.hasAcceptedAnswer || q.acceptedAnswerId),
+          userVote: 0,
+        }));
+        setQuestions((prev) => (prev && prev.length > 0 ? prev : mapped));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser.id]);
+
 
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -335,63 +364,70 @@ const StackOverflowCloneMain = () => {
     }
   }, [notificationSettings.desktop, notificationSettings.showToasts, playNotificationSound]);
 
-  const handleVoteQuestion = useCallback((questionId, voteType) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        const currentVote = q.userVote || 0;
-        let newVote = 0; let voteDiff = 0;
-        if (voteType === 1) { newVote = currentVote === 1 ? 0 : 1; voteDiff = newVote - currentVote; }
-        else { newVote = currentVote === -1 ? 0 : -1; voteDiff = newVote - currentVote; }
-        
-        if (voteDiff > 0 && q.author.id !== currentUser?.id) {
-          if (notificationSettings.votes) {
+  const handleVoteQuestion = useCallback(async (questionId, voteType) => {
+    const type = voteType === 1 ? 'UP' : 'DOWN';
+    const res = await apiService.voteQuestion(questionId, type, currentUser.id);
+    if (res.ok) {
+      setQuestions(prev => prev.map(q => {
+        if (q.id === questionId) {
+          const currentVote = q.userVote || 0;
+          let newVote = 0; let voteDiff = 0;
+          if (voteType === 1) { newVote = currentVote === 1 ? 0 : 1; voteDiff = newVote - currentVote; }
+          else { newVote = currentVote === -1 ? 0 : -1; voteDiff = newVote - currentVote; }
+          if (voteDiff > 0 && q.author.id !== currentUser?.id && notificationSettings.votes) {
             addNotification('vote', 'Novo voto positivo', `Sua pergunta "${q.title.substring(0, 40)}..." recebeu um voto positivo`, 'low', `#question-${questionId}`);
           }
+          return { ...q, votes: q.votes + voteDiff, userVote: newVote };
         }
-        
-        return { ...q, votes: q.votes + voteDiff, userVote: newVote };
-      }
-      return q;
-    }));
-  }, [currentUser, notificationSettings, addNotification]);
+        return q;
+      }));
+    } else {
+      error('Falha ao votar', res.error?.message || '');
+    }
+  }, [currentUser, notificationSettings, addNotification, error]);
 
-  const handleVoteAnswer = (questionId, answerId, voteType) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        return { ...q, answers: q.answers.map(a => {
-          if (a.id === answerId) {
-            const currentVote = a.userVote || 0;
-            let newVote = 0; let voteDiff = 0;
-            if (voteType === 1) { newVote = currentVote === 1 ? 0 : 1; voteDiff = newVote - currentVote; }
-            else { newVote = currentVote === -1 ? 0 : -1; voteDiff = newVote - currentVote; }
-            if (voteDiff > 0 && a.author.id !== currentUser?.id && notificationSettings.votes) {
-              addNotification('vote', 'Novo voto positivo', `Sua resposta recebeu um voto positivo`, 'low', `#answer-${answerId}`);
+  const handleVoteAnswer = async (questionId, answerId, voteType) => {
+    const type = voteType === 1 ? 'UP' : 'DOWN';
+    const res = await apiService.voteAnswer(answerId, type, currentUser.id);
+    if (res.ok) {
+      setQuestions(prev => prev.map(q => {
+        if (q.id === questionId) {
+          return { ...q, answers: q.answers.map(a => {
+            if (a.id === answerId) {
+              const currentVote = a.userVote || 0;
+              let newVote = 0; let voteDiff = 0;
+              if (voteType === 1) { newVote = currentVote === 1 ? 0 : 1; voteDiff = newVote - currentVote; }
+              else { newVote = currentVote === -1 ? 0 : -1; voteDiff = newVote - currentVote; }
+              if (voteDiff > 0 && a.author.id !== currentUser?.id && notificationSettings.votes) {
+                addNotification('vote', 'Novo voto positivo', `Sua resposta recebeu um voto positivo`, 'low', `#answer-${answerId}`);
+              }
+              return { ...a, votes: a.votes + voteDiff, userVote: newVote };
             }
-            return { ...a, votes: a.votes + voteDiff, userVote: newVote };
-          }
-          return a; }) };
-      }
-      return q;
-    }));
+            return a; }) };
+        }
+        return q;
+      }));
+    } else {
+      error('Falha ao votar resposta', res.error?.message || '');
+    }
   };
 
-  const handleAcceptAnswer = (questionId, answerId) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        const answer = q.answers.find(a => a.id === answerId);
-        if (answer && answer.author.id !== currentUser?.id && notificationSettings.accepted) {
-          addNotification('accepted', 'Resposta aceita!', 'Sua resposta foi marcada como a melhor solução!', 'high', `#answer-${answerId}`);
-          
-          if (Math.random() > 0.5 && notificationSettings.badges) {
-            setTimeout(() => {
-              addNotification('badge', 'Nova conquista desbloqueada!', 'Você ganhou a medalha "Resposta Exemplar" por ter 5 respostas aceitas', 'high');
-            }, 2000);
+  const handleAcceptAnswer = async (questionId, answerId) => {
+    const res = await apiService.acceptAnswer(questionId, answerId, currentUser.id);
+    if (res.ok && res.data?.success !== false) {
+      setQuestions(prev => prev.map(q => {
+        if (q.id === questionId) {
+          const answer = q.answers.find(a => a.id === answerId);
+          if (answer && answer.author.id !== currentUser?.id && notificationSettings.accepted) {
+            addNotification('accepted', 'Resposta aceita!', 'Sua resposta foi marcada como a melhor solução!', 'high', `#answer-${answerId}`);
           }
+          return { ...q, hasAcceptedAnswer: true, answers: q.answers.map(a => ({ ...a, isAccepted: a.id === answerId })) };
         }
-        return { ...q, hasAcceptedAnswer: true, answers: q.answers.map(a => ({ ...a, isAccepted: a.id === answerId })) };
-      }
-      return q;
-    }));
+        return q;
+      }));
+    } else {
+      error('Não foi possível aceitar a resposta', res.data?.error || res.error?.message || '');
+    }
   };
 
   const extractCodeBlocks = (content) => {
@@ -409,84 +445,115 @@ const StackOverflowCloneMain = () => {
 
   const renderMarkdown = (content) => {
     if (!content) return '';
-    let processed = content.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-2 py-1 rounded text-blue-400 text-sm font-mono">$1</code>');
-    processed = processed.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto my-2"><code class="text-green-400 text-sm font-mono">${escapeHtml(code)}</code></pre>`;
+    // Escape all HTML first to prevent XSS, then apply Markdown replacements
+    const safe = escapeHtml(content);
+    // Handle fenced code blocks first
+    let processed = safe.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+      // 'code' is already escaped by 'safe'
+      return `<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto my-2"><code class="text-green-400 text-sm font-mono">${code}</code></pre>`;
     });
+    // Inline code
+    processed = processed.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-2 py-1 rounded text-blue-400 text-sm font-mono">$1</code>');
+    // Bold and italic
     processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
     processed = processed.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
-    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:underline" target="_blank">$1</a>');
+    // Links (add rel for security)
+    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
+    // Mentions
     processed = processed.replace(/@(\w+)/g, '<span class="text-blue-500 font-semibold">@$1</span>');
+    // Line breaks
     processed = processed.replace(/\n/g, '<br>');
     return processed;
   };
 
-  const handleCreateQuestion = useCallback(() => {
+  const handleCreateQuestion = useCallback(async () => {
     if (!newQuestion.title || !newQuestion.content) return;
-    const question = {
-      id: Date.now(), title: newQuestion.title, content: newQuestion.content,
-      tags: newQuestion.tags.split(',').map(t => t.trim()).filter(t => t),
-      author: currentUser, votes: 0, views: 0, answers: [], createdAt: new Date(), hasAcceptedAnswer: false, userVote: 0
-    };
-    setQuestions(prev => [question, ...prev]);
-    setNewQuestion({ title: "", content: "", tags: "" });
-    setShowNewQuestion(false);
-    
+    const tagsArr = newQuestion.tags.split(',').map(t => t.trim()).filter(t => t);
+    const res = await apiService.createQuestion({ title: newQuestion.title, content: newQuestion.content, tags: tagsArr }, currentUser.id);
+    if (res.ok) {
+      const createdId = res.data?.id || Date.now().toString();
+      const question = {
+        id: createdId,
+        title: newQuestion.title,
+        content: newQuestion.content,
+        tags: tagsArr,
+        author: currentUser,
+        votes: 0,
+        views: 0,
+        answers: [],
+        createdAt: new Date(),
+        hasAcceptedAnswer: false,
+        userVote: 0,
+      };
+      setQuestions(prev => [question, ...prev]);
+      setNewQuestion({ title: "", content: "", tags: "" });
+      setShowNewQuestion(false);
+      success('Pergunta criada!', `Sua pergunta "${question.title.substring(0, 40)}..." foi publicada com sucesso!`);
+    } else {
+      error('Falha ao criar pergunta', res.error?.message || '');
+    }
+  }, [newQuestion, currentUser, success, error]);
 
-    
-    success('Pergunta criada!', `Sua pergunta "${question.title.substring(0, 40)}..." foi publicada com sucesso!`);
-  }, [newQuestion, currentUser, success]);
-
-  const handleCreateAnswer = (questionId, parentAnswerId = null) => {
+  const handleCreateAnswer = async (questionId, parentAnswerId = null) => {
     if (!newAnswer.trim()) return;
-    const answerId = Date.now();
-    const answer = {
-      id: answerId, content: newAnswer, author: currentUser, votes: 0, isAccepted: false,
-      createdAt: new Date(), comments: [], userVote: 0, parentId: parentAnswerId, replies: [], editHistory: [], codeBlocks: extractCodeBlocks(newAnswer)
-    };
-    
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        if (q.author.id !== currentUser?.id) {
-          addNotification('answer', 'Nova resposta', `${currentUser?.name} respondeu sua pergunta: "${q.title.substring(0, 50)}..."`, 'high', `#question-${questionId}`);
-        }
-        const mentions = newAnswer.match(/@(\w+)/g);
-        if (mentions) { mentions.forEach(() => addNotification('mention', 'Você foi mencionado', `${currentUser?.name} mencionou você em uma resposta`, 'high', `#answer-${answerId}`)); }
-        addNotification('success', 'Resposta publicada!', 'Sua resposta foi publicada com sucesso', 'normal');
-        if (parentAnswerId) {
-          return { ...q, answers: q.answers.map(a => {
-            if (a.id === parentAnswerId) {
-              if (a.author.id !== currentUser?.id) {
-                addNotification('comment', 'Nova resposta ao seu comentário', `${currentUser?.name} respondeu ao seu comentário`, 'normal', `#answer-${parentAnswerId}`);
+    const res = await apiService.addAnswer(questionId, { content: newAnswer, parentAnswerId }, currentUser.id);
+    if (res.ok) {
+      const answerId = res.data?.id || Date.now();
+      const answer = {
+        id: answerId, content: newAnswer, author: currentUser, votes: 0, isAccepted: false,
+        createdAt: new Date(), comments: [], userVote: 0, parentId: parentAnswerId, replies: [], editHistory: [], codeBlocks: extractCodeBlocks(newAnswer)
+      };
+      setQuestions(prev => prev.map(q => {
+        if (q.id === questionId) {
+          if (q.author.id !== currentUser?.id) {
+            addNotification('answer', 'Nova resposta', `${currentUser?.name} respondeu sua pergunta: "${q.title.substring(0, 50)}..."`, 'high', `#question-${questionId}`);
+          }
+          const mentions = newAnswer.match(/@(\w+)/g);
+          if (mentions) { mentions.forEach(() => addNotification('mention', 'Você foi mencionado', `${currentUser?.name} mencionou você em uma resposta`, 'high', `#answer-${answerId}`)); }
+          addNotification('success', 'Resposta publicada!', 'Sua resposta foi publicada com sucesso', 'normal');
+          if (parentAnswerId) {
+            return { ...q, answers: q.answers.map(a => {
+              if (a.id === parentAnswerId) {
+                if (a.author.id !== currentUser?.id) {
+                  addNotification('comment', 'Nova resposta ao seu comentário', `${currentUser?.name} respondeu ao seu comentário`, 'normal', `#answer-${parentAnswerId}`);
+                }
+                return { ...a, replies: [...(a.replies || []), answer] };
               }
-              return { ...a, replies: [...(a.replies || []), answer] };
-            }
-            return a; }) };
-        } else {
-          return { ...q, answers: [...q.answers, answer] };
+              return a; }) };
+          } else {
+            return { ...q, answers: [...q.answers, answer] };
+          }
         }
-      }
-      return q;
-    }));
-    setNewAnswerId(answerId);
-    setTimeout(() => setNewAnswerId(null), 3000);
-    setNewAnswer(""); setShowAnswerForm(null); setReplyingTo(null); setShowMarkdownPreview(false); setShowQuickAnswer(null);
+        return q;
+      }));
+      setNewAnswerId(answerId);
+      setTimeout(() => setNewAnswerId(null), 3000);
+      setNewAnswer(""); setShowAnswerForm(null); setReplyingTo(null); setShowMarkdownPreview(false); setShowQuickAnswer(null);
+    } else {
+      error('Falha ao publicar resposta', res.error?.message || '');
+    }
   };
 
-  const handleAddComment = (questionId, answerId, comment) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === questionId) {
-        return { ...q, answers: q.answers.map(a => {
-          if (a.id === answerId) {
-            if (a.author.id !== currentUser?.id && notificationSettings.comments) {
-              addNotification('comment', 'Novo comentário', `${currentUser?.name} comentou em sua resposta: "${comment.substring(0, 50)}..."`, 'normal', `#answer-${answerId}`);
+  const handleAddComment = async (questionId, answerId, comment) => {
+    if (!comment || !comment.trim()) return;
+    const res = await apiService.createComment({ content: comment, answerId }, currentUser.id);
+    if (res.ok) {
+      setQuestions(prev => prev.map(q => {
+        if (q.id === questionId) {
+          return { ...q, answers: q.answers.map(a => {
+            if (a.id === answerId) {
+              if (a.author.id !== currentUser?.id && notificationSettings.comments) {
+                addNotification('comment', 'Novo comentário', `${currentUser?.name} comentou em sua resposta: "${comment.substring(0, 50)}..."`, 'normal', `#answer-${answerId}`);
+              }
+              return { ...a, comments: [...a.comments, { id: res.data?.id || Date.now(), author: currentUser?.name, content: comment, createdAt: new Date() }] };
             }
-            return { ...a, comments: [...a.comments, { id: Date.now(), author: currentUser?.name, content: comment, createdAt: new Date() }] };
-          }
-          return a; }) };
-      }
-      return q;
-    }));
+            return a; }) };
+        }
+        return q;
+      }));
+    } else {
+      error('Falha ao comentar', res.error?.message || '');
+    }
   };
 
   const handleEditAnswer = (questionId, answerId, newContent) => {
@@ -571,57 +638,27 @@ const StackOverflowCloneMain = () => {
   };
 
   // Função para busca avançada
-  const handleAdvancedSearch = (searchParams) => {
+  const handleAdvancedSearch = async (searchParams) => {
     const { query, filters } = searchParams;
-    
-    // Aplicar filtros
-    let filtered = questions;
-    
-    if (filters.type === 'questions' || filters.type === 'all') {
-      if (query) {
-        filtered = filtered.filter(q => 
-          q.title.toLowerCase().includes(query.toLowerCase()) ||
-          q.content.toLowerCase().includes(query.toLowerCase())
-        );
-      }
-      
-      // Filtros adicionais
-      if (filters.hasAcceptedAnswer !== null) {
-        filtered = filtered.filter(q => q.hasAcceptedAnswer === filters.hasAcceptedAnswer);
-      }
-      
-      if (filters.minVotes > 0) {
-        filtered = filtered.filter(q => q.votes >= filters.minVotes);
-      }
-      
-      if (filters.minViews > 0) {
-        filtered = filtered.filter(q => q.views >= filters.minViews);
-      }
-      
-      // Ordenação
-      switch (filters.sortBy) {
-        case 'newest':
-          filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          break;
-        case 'oldest':
-          filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-          break;
-        case 'votes':
-          filtered.sort((a, b) => b.votes - a.votes);
-          break;
-        case 'views':
-          filtered.sort((a, b) => b.views - a.views);
-          break;
-        default: // relevance
-          // Manter ordenação atual
-          break;
-      }
-    }
-    
-    // Atualizar resultados
     setSearchQuery(query);
-    // TODO: Implementar sistema de resultados de busca
-    console.log('Busca avançada:', { query, filters, results: filtered.length });
+    if (!query || !query.trim()) return;
+    const res = await apiService.searchQuestions({ q: query, limit: 50, offset: 0 }, currentUser.id);
+    if (res.ok) {
+      const mapped = (res.data || []).map((q) => ({
+        id: q.id,
+        title: q.title,
+        content: q.content,
+        tags: [],
+        author: { id: 'unknown', name: 'Usuário', reputation: 0, avatar: 'US' },
+        votes: 0,
+        views: q.views || 0,
+        answers: [],
+        createdAt: q.createdAt ? new Date(q.createdAt) : new Date(),
+        hasAcceptedAnswer: false,
+        userVote: 0,
+      }));
+      setQuestions(mapped);
+    }
   };
   const getTimeAgo = (timestamp) => {
     const seconds = Math.floor((new Date() - timestamp) / 1000);
@@ -700,6 +737,47 @@ const StackOverflowCloneMain = () => {
   const incrementViews = (questionId) => {
     setQuestions(prev => prev.map(q => q.id === questionId ? { ...q, views: q.views + 1 } : q));
   };
+
+  // Carregar detalhes da pergunta ao selecionar
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!selectedQuestion || !selectedQuestion.id) return;
+      const res = await apiService.getQuestion(selectedQuestion.id, currentUser.id);
+      if (!cancelled && res.ok && res.data) {
+        const q = res.data;
+        const answers = (q.answers || []).map((a) => ({
+          id: a.id,
+          content: a.content,
+          author: { id: a.author?.id || 'unknown', name: a.author?.name || 'Usuário', reputation: 0, avatar: (a.author?.name || 'U').slice(0, 2).toUpperCase() },
+          votes: (a.votes || []).reduce((acc, v) => acc + (v.type === 'UP' ? 1 : -1), 0),
+          isAccepted: Boolean(a.isAccepted),
+          createdAt: new Date(a.createdAt),
+          comments: (a.comments || []).map((c) => ({ id: c.id, author: c.author?.name || 'Usuário', content: c.content, createdAt: new Date(c.createdAt) })),
+          userVote: 0,
+          replies: [],
+        }));
+        const merged = {
+          id: q.id,
+          title: q.title,
+          content: q.content,
+          tags: q.questionTags?.map((qt) => qt.tag?.slug) || [],
+          author: { id: q.author?.id || 'unknown', name: q.author?.name || 'Usuário', reputation: 0, avatar: (q.author?.name || 'U').slice(0, 2).toUpperCase() },
+          votes: (q.votes || []).reduce((acc, v) => acc + (v.type === 'UP' ? 1 : -1), 0),
+          views: q.views ?? 0,
+          answers,
+          createdAt: new Date(q.createdAt),
+          hasAcceptedAnswer: Boolean(q.acceptedAnswerId),
+          userVote: 0,
+        };
+        setSelectedQuestion(merged);
+        setQuestions((prev) => prev.map((pq) => (pq.id === merged.id ? { ...pq, ...merged } : pq)));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedQuestion?.id]);
 
   const Tag = ({ name, count, selected, onClick }) => (
     <button onClick={onClick} className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${selected ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>

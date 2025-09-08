@@ -5,6 +5,7 @@ import { GAMIFICATION_QUEUE } from './gamification.constants.js';
 import { GamificationRulesService } from './rules.service.js';
 import { ReputationService } from './reputation.service.js';
 import { CurrencyService } from './currency.service.js';
+import { getPrisma } from '../prisma.js';
 
 @Processor(GAMIFICATION_QUEUE)
 export class GamificationProcessor extends WorkerHost {
@@ -16,8 +17,25 @@ export class GamificationProcessor extends WorkerHost {
     const { type, payload } = job.data as { type: GamificationActionType; payload: { userId: string; targetId?: string } };
     const rule = this.rules.getRule(type);
     if (!rule) return;
+    const prisma = getPrisma();
 
-    // NOTE: Daily limits e validações completas serão feitas via DB no Passo 4
+    // Enforce simple daily limits using DB log counts
+    if (rule.dailyLimit && rule.dailyLimit > 0) {
+      const start = new Date();
+      start.setUTCHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setUTCHours(23, 59, 59, 999);
+      const count = await prisma.gamificationActionLog.count({
+        where: {
+          userId: payload.userId,
+          actionType: type,
+          createdAt: { gte: start, lte: end },
+        },
+      });
+      if (count >= rule.dailyLimit) return;
+    }
+
+    // Apply rewards
     if (rule.rep !== 0) {
       await this.reputation.grantReputation(payload.userId, rule.rep, type, payload.targetId);
     }
@@ -25,7 +43,7 @@ export class GamificationProcessor extends WorkerHost {
       if (rule.currency > 0) {
         await this.currency.credit(payload.userId, rule.currency, type, payload.targetId);
       } else {
-        await this.currency.debit(payload.userId, Math.abs(rule.currency), `${type}`);
+        await this.currency.debit(payload.userId, Math.abs(rule.currency), type);
       }
     }
   }

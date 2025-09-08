@@ -14,9 +14,10 @@ app.use(express.json());
 app.use(rateLimit({ key: 'api', windowMs: 60_000, max: 100 }));
 
 const server = createServer(app);
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: FRONTEND_ORIGIN,
     methods: ["GET", "POST"]
   }
 });
@@ -113,9 +114,17 @@ io.on('connection', (socket) => {
       });
     }
 
-    // Gamification: count as COMMENT_CREATED (messaging treated as comment-like activity)
+    // Gamification: comentar/atividade
     try {
-      publishEvent('COMMENT_CREATED', { userId: socket.userId, targetId: roomKey });
+      if (USE_NEST_GAMIFY) {
+        fetch(`${NEST_BASE_URL.replace(/\/$/, '')}/gamification/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'COMMENT_CREATED', payload: { userId: socket.userId, targetId: roomKey } })
+        }).catch(() => {});
+      } else {
+        publishEvent('COMMENT_CREATED', { userId: socket.userId, targetId: roomKey });
+      }
     } catch (err) {
       console.warn('Failed to publish gamification event', err);
     }
