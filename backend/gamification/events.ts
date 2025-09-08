@@ -19,4 +19,16 @@ export type GamificationEvent = {
   createdAt: string;
 };
 
+export function isGamificationEventType(val: string): val is GamificationEventType {
+  return (
+    val === 'ANSWER_UPVOTED' ||
+    val === 'SOLUTION_MARKED' ||
+    val === 'DAILY_LOGIN' ||
+    val === 'COMMENT_CREATED' ||
+    val === 'UPVOTE_GIVEN' ||
+    val === 'DOWNVOTE_GIVEN' ||
+    val === 'PROFILE_COMPLETED'
+  );
+}
+
 

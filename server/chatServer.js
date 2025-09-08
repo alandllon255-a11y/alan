@@ -114,9 +114,17 @@ io.on('connection', (socket) => {
       });
     }
 
-    // Gamification: count as COMMENT_CREATED (messaging treated as comment-like activity)
+    // Gamification: comentar/atividade
     try {
-      publishEvent('COMMENT_CREATED', { userId: socket.userId, targetId: roomKey });
+      if (USE_NEST_GAMIFY) {
+        fetch(`${NEST_BASE_URL.replace(/\/$/, '')}/gamification/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'COMMENT_CREATED', payload: { userId: socket.userId, targetId: roomKey } })
+        }).catch(() => {});
+      } else {
+        publishEvent('COMMENT_CREATED', { userId: socket.userId, targetId: roomKey });
+      }
     } catch (err) {
       console.warn('Failed to publish gamification event', err);
     }

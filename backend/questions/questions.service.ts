@@ -74,17 +74,14 @@ export class QuestionsService {
     const safeOffset = Math.max(offset, 0);
 
     // Raw FTS using Postgres to_tsvector/plainto_tsquery (no extra extension required)
-    const rows = await prisma.$queryRawUnsafe<Array<{ id: string; title: string; content: string; created_at: Date; views: number; rank: number }>>(
-      `SELECT q.id, q.title, q.content, q.created_at, q.views,
-              ts_rank(to_tsvector('simple', coalesce(q.title,'') || ' ' || coalesce(q.content,'')), plainto_tsquery('simple', $1)) as rank
-         FROM questions q
-        WHERE to_tsvector('simple', coalesce(q.title,'') || ' ' || coalesce(q.content,'')) @@ plainto_tsquery('simple', $1)
-        ORDER BY rank DESC, q.created_at DESC
-        LIMIT $2 OFFSET $3`,
-      q,
-      safeLimit,
-      safeOffset
-    );
+    const rows = await prisma.$queryRaw<Array<{ id: string; title: string; content: string; created_at: Date; views: number; rank: number }>>`
+      SELECT q.id, q.title, q.content, q.created_at, q.views,
+             ts_rank(to_tsvector('simple', coalesce(q.title,'') || ' ' || coalesce(q.content,'')), plainto_tsquery('simple', ${q})) as rank
+        FROM questions q
+       WHERE to_tsvector('simple', coalesce(q.title,'') || ' ' || coalesce(q.content,'')) @@ plainto_tsquery('simple', ${q})
+       ORDER BY rank DESC, q.created_at DESC
+       LIMIT ${safeLimit} OFFSET ${safeOffset}
+    `;
 
     return rows.map((r) => ({
       id: r.id,

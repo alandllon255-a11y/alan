@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Post, Request } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { getRedis } from '../redis.js';
 import { getPrisma } from '../prisma.js';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
@@ -30,11 +32,17 @@ export class AuthController {
   async login(@Body() body: LoginDto) {
     const prisma = getPrisma();
     const user = await prisma.user.findUnique({ where: { email: body.email } });
-    // Demo: senha não hash, apenas exemplo (em produção use bcrypt)
-    if (!user || user.password !== body.password) {
+    if (!user) {
+      return { success: false, error: 'Credenciais inválidas' };
+    }
+    const ok = await bcrypt.compare(body.password, user.password);
+    if (!ok) {
       return { success: false, error: 'Credenciais inválidas' };
     }
     const { accessToken, refreshToken } = signTokens(user.id);
+    // store refresh in Redis for rotation
+    const redis = getRedis();
+    try { await redis.setex(`refresh:${user.id}:${refreshToken}`, 7 * 24 * 3600, '1'); } catch {}
     return { success: true, accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email } };
   }
 
@@ -45,7 +53,14 @@ export class AuthController {
       if (decoded.type !== 'refresh' || !decoded.id) {
         return { success: false, error: 'Token inválido' };
       }
+      // validate refresh in Redis and rotate
+      const redis = getRedis();
+      const key = `refresh:${decoded.id}:${body.refreshToken}`;
+      const exists = await redis.get(key);
+      if (!exists) return { success: false, error: 'Refresh inválido' };
+      await redis.del(key);
       const { accessToken, refreshToken } = signTokens(decoded.id);
+      try { await redis.setex(`refresh:${decoded.id}:${refreshToken}`, 7 * 24 * 3600, '1'); } catch {}
       return { success: true, accessToken, refreshToken };
     } catch {
       return { success: false, error: 'Token inválido' };

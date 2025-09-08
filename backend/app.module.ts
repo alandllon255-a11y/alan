@@ -12,10 +12,11 @@ import { HealthController } from './health/health.controller.js';
 import { createRateLimiter } from './common/rate-limit.middleware.js';
 import { AuthController } from './auth/auth.controller.js';
 import { StoreController } from './store/store.controller.js';
+import { GamificationController } from './gamification/gamification.controller.js';
 
 @Module({
   imports: [GamificationModule],
-  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController, CommentsController, HealthController, AuthController, StoreController],
+  controllers: [AnswersController, ProfileController, LeaderboardController, QuestionsController, CommentsController, HealthController, AuthController, StoreController, GamificationController],
   providers: [AnswersService, QuestionsService],
 })
 export class AppModule implements NestModule {
