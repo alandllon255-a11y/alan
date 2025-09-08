@@ -159,6 +159,10 @@ export class QuestionsService {
   async voteQuestion(userId: string, questionId: string, type: VoteType) {
     const prisma = getPrisma();
     return await prisma.$transaction(async (tx) => {
+      // prevent self-vote
+      const q = await tx.question.findUnique({ where: { id: questionId }, select: { authorId: true } });
+      if (!q) return { changed: false } as const;
+      if (q.authorId === userId) return { changed: false } as const;
       const existing = await tx.questionVote
         .findUnique({ where: { questionId_userId: { questionId, userId } } })
         .catch(() => null);
