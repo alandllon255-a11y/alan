@@ -10,8 +10,9 @@ export class JwtAuthGuard implements CanActivate {
 
     // Fallback for dev: allow x-user-id when JWT is not provided
     if (!token) {
-      const headerUserId = request.headers['x-user-id'];
-      if (headerUserId) {
+      const allowDevHeader = process.env.ALLOW_DEV_HEADER === 'true';
+      const headerUserId = allowDevHeader ? request.headers['x-user-id'] : undefined;
+      if (allowDevHeader && headerUserId) {
         request.user = { id: headerUserId.toString() };
         return true;
       }

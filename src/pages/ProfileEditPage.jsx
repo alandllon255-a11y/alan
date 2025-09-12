@@ -27,13 +27,26 @@ const ProfileEditPage = () => {
       })
       .catch(() => setError('Falha ao carregar perfil'))
       .finally(() => setLoading(false));
+    return () => {
+      setPreview((prev) => {
+        if (prev && prev.startsWith('blob:')) {
+          try { URL.revokeObjectURL(prev); } catch (_) {}
+        }
+        return '';
+      });
+    };
   }, []);
 
   const onDrop = useCallback((acceptedFiles) => {
     if (!acceptedFiles || acceptedFiles.length === 0) return;
     const file = acceptedFiles[0];
     const objectUrl = URL.createObjectURL(file);
-    setPreview(objectUrl);
+    setPreview((prev) => {
+      if (prev && prev.startsWith('blob:')) {
+        try { URL.revokeObjectURL(prev); } catch (_) {}
+      }
+      return objectUrl;
+    });
     setUploading(true);
     uploadAvatar(file)
       .then(({ url }) => setForm((prev) => ({ ...prev, avatarUrl: url })))
