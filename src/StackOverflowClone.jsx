@@ -13,6 +13,15 @@ import { useNavigate } from 'react-router-dom';
 
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import bash from 'highlight.js/lib/languages/bash';
+import jsonLang from 'highlight.js/lib/languages/json';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import plaintext from 'highlight.js/lib/languages/plaintext';
 import ProfileRecentQuestions from './components/profile/ProfileRecentQuestions.jsx';
 import ProfileRecentAnswers from './components/profile/ProfileRecentAnswers.jsx';
 import ChatView from './components/chat/ChatView.jsx';
@@ -411,9 +420,38 @@ const StackOverflowCloneMain = () => {
 
   const renderMarkdown = (content) => {
     if (!content) return '';
+    // registrar linguagens idempotente
+    try {
+      if (!hljs.getLanguage('javascript')) hljs.registerLanguage('javascript', javascript);
+      if (!hljs.getLanguage('js')) hljs.registerLanguage('js', javascript);
+      if (!hljs.getLanguage('typescript')) hljs.registerLanguage('typescript', typescript);
+      if (!hljs.getLanguage('ts')) hljs.registerLanguage('ts', typescript);
+      if (!hljs.getLanguage('python')) hljs.registerLanguage('python', python);
+      if (!hljs.getLanguage('py')) hljs.registerLanguage('py', python);
+      if (!hljs.getLanguage('bash')) hljs.registerLanguage('bash', bash);
+      if (!hljs.getLanguage('sh')) hljs.registerLanguage('sh', bash);
+      if (!hljs.getLanguage('json')) hljs.registerLanguage('json', jsonLang);
+      if (!hljs.getLanguage('xml')) hljs.registerLanguage('xml', xml);
+      if (!hljs.getLanguage('html')) hljs.registerLanguage('html', xml);
+      if (!hljs.getLanguage('css')) hljs.registerLanguage('css', css);
+      if (!hljs.getLanguage('plaintext')) hljs.registerLanguage('plaintext', plaintext);
+      if (!hljs.getLanguage('text')) hljs.registerLanguage('text', plaintext);
+    } catch (_) {}
+
     let processed = content.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-2 py-1 rounded text-blue-400 text-sm font-mono">$1</code>');
     processed = processed.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto my-2"><code class="text-green-400 text-sm font-mono">${escapeHtml(code)}</code></pre>`;
+      const language = (lang || 'plaintext').toLowerCase();
+      let highlighted;
+      try {
+        if (hljs.getLanguage(language)) {
+          highlighted = hljs.highlight(code, { language }).value;
+        } else {
+          highlighted = hljs.highlight(code, { language: 'plaintext' }).value;
+        }
+      } catch (_) {
+        highlighted = escapeHtml(code);
+      }
+      return `<pre class="p-0 my-2 overflow-x-auto rounded-lg"><code class="hljs language-${language}">${highlighted}</code></pre>`;
     });
     processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
     processed = processed.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');

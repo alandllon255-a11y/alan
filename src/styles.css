@@ -21,4 +21,13 @@
 /* Estilos mínimos adicionais sem @apply para evitar erros de build */
 html, body, #root { height: 100%; }
 
+/* Dracula theme subset for highlight.js */
+.hljs { display: block; overflow-x: auto; padding: 1rem; background: #282a36; color: #f8f8f2; border-radius: 0.5rem; }
+.hljs-keyword, .hljs-selector-tag, .hljs-subst { color: #ff79c6; }
+.hljs-string, .hljs-title, .hljs-name, .hljs-type, .hljs-attribute, .hljs-symbol, .hljs-bullet, .hljs-addition { color: #50fa7b; }
+.hljs-number, .hljs-literal, .hljs-deletion { color: #bd93f9; }
+.hljs-comment, .hljs-quote { color: #6272a4; }
+.hljs-section, .hljs-meta { color: #8be9fd; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 700; }
 
