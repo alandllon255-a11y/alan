@@ -23,7 +23,17 @@ const ProfileEditPage = () => {
     getProfile()
       .then((p) => {
         try { localStorage.setItem('x_user_id', p.id); } catch (_) {}
-        setForm((prev) => ({ ...prev, id: p.id, name: p.name || '', bio: p.bio || '', avatarUrl: p.avatarUrl || '' }));
+        setForm((prev) => ({
+          ...prev,
+          id: p.id,
+          name: p.name || '',
+          bio: p.bio || '',
+          avatarUrl: p.avatarUrl || '',
+          githubUrl: p.githubUrl || '',
+          linkedinUrl: p.linkedinUrl || '',
+          twitterUrl: p.twitterUrl || '',
+          portfolioUrl: p.portfolioUrl || '',
+        }));
         setPreview(p.avatarUrl || '');
       })
       .catch(() => setError('Falha ao carregar perfil'))

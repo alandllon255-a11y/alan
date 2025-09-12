@@ -714,6 +714,10 @@ const StackOverflowCloneMain = () => {
           reputation: p.reputation_points || 0,
           avatarUrl: p.avatarUrl || '',
           avatar: (p.name || 'Você').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase(),
+          githubUrl: p.githubUrl || '',
+          linkedinUrl: p.linkedinUrl || '',
+          twitterUrl: p.twitterUrl || '',
+          portfolioUrl: p.portfolioUrl || '',
         };
         try { localStorage.setItem('x_user_id', p.id); } catch(_) {}
         setCurrentUser(user);

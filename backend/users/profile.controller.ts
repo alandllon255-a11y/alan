@@ -31,6 +31,10 @@ export class ProfileController {
           name: true,
           bio: true,
           avatarUrl: true,
+          githubUrl: true,
+          linkedinUrl: true,
+          twitterUrl: true,
+          portfolioUrl: true,
           reputationPoints: true,
           currencyBalance: true,
           currentLevel: true,
@@ -57,6 +61,10 @@ export class ProfileController {
         name: user.name,
         bio: user.bio,
         avatarUrl: user.avatarUrl,
+        githubUrl: user.githubUrl,
+        linkedinUrl: user.linkedinUrl,
+        twitterUrl: user.twitterUrl,
+        portfolioUrl: user.portfolioUrl,
         reputation_points: user.reputationPoints,
         currency_balance: user.currencyBalance,
         current_level: user.currentLevel,
@@ -114,18 +122,21 @@ export class ProfileController {
     if (typeof body.name !== 'undefined') data.name = body.name;
     if (typeof body.bio !== 'undefined') data.bio = body.bio;
     if (typeof body.avatarUrl !== 'undefined') data.avatarUrl = body.avatarUrl;
-    // Ignore unsupported fields (e.g., social links, portfolio) since they are not in the schema
+    if (typeof body.githubUrl !== 'undefined') data.githubUrl = body.githubUrl;
+    if (typeof body.linkedinUrl !== 'undefined') data.linkedinUrl = body.linkedinUrl;
+    if (typeof body.twitterUrl !== 'undefined') data.twitterUrl = body.twitterUrl;
+    if (typeof body.portfolioUrl !== 'undefined') data.portfolioUrl = body.portfolioUrl;
 
     try {
       const updated = await prisma.user.update({
         where: { id },
         data,
-        select: { id: true, name: true, bio: true, avatarUrl: true },
+        select: { id: true, name: true, bio: true, avatarUrl: true, githubUrl: true, linkedinUrl: true, twitterUrl: true, portfolioUrl: true },
       });
       return updated;
     } catch (e) {
       // Fallback para ambientes sem DB: retorna os dados que seriam atualizados
-      return { id, name: data.name ?? null, bio: data.bio ?? null, avatarUrl: data.avatarUrl ?? null, warning: 'DB indisponível, alterando apenas em memória' };
+      return { id, name: data.name ?? null, bio: data.bio ?? null, avatarUrl: data.avatarUrl ?? null, githubUrl: data.githubUrl ?? null, linkedinUrl: data.linkedinUrl ?? null, twitterUrl: data.twitterUrl ?? null, portfolioUrl: data.portfolioUrl ?? null, warning: 'DB indisponível, alterando apenas em memória' };
     }
   }
 }
