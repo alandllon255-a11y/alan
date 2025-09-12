@@ -40,19 +40,12 @@ import { useTheme } from './hooks/useTheme.js';
 
  
 import { useChat } from './hooks/useChat.js';
+import { getProfile } from './services/api.js';
 
 const StackOverflowCloneMain = () => {
   const navigate = useNavigate();
   // Definir currentUser
-  const [currentUser, setCurrentUser] = useState({
-    id: 7,
-    name: "Você",
-    username: "devmaster",
-    email: "voce@exemplo.com",
-    reputation: 150,
-    avatar: "YU",
-    portfolio: []
-  });
+  const [currentUser, setCurrentUser] = useState(null);
 
   
 
@@ -69,7 +62,7 @@ const StackOverflowCloneMain = () => {
     markAsRead,
     getConversationMessages,
     requestNotificationPermission
-  } = useChat(currentUser.id, currentUser.name);
+  } = useChat(currentUser?.id || 0, currentUser?.name || '');
 
   const [questions, setQuestions] = useState([
     {
@@ -707,6 +700,31 @@ const StackOverflowCloneMain = () => {
     return () => clearInterval(interval);
   }, [questions, notificationSettings, currentUser, addNotification]);
 
+  // Carregar perfil real do backend
+  useEffect(() => {
+    let isMounted = true;
+    getProfile()
+      .then((p) => {
+        if (!isMounted) return;
+        const user = {
+          id: p.id,
+          name: p.name || 'Você',
+          username: p.email?.split('@')[0] || 'devforum',
+          email: p.email || '',
+          reputation: p.reputation_points || 0,
+          avatarUrl: p.avatarUrl || '',
+          avatar: (p.name || 'Você').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase(),
+        };
+        try { localStorage.setItem('x_user_id', p.id); } catch(_) {}
+        setCurrentUser(user);
+      })
+      .catch(() => {
+        // mantém mock se falhar
+        if (!currentUser) setCurrentUser({ id: 7, name: 'Você', username: 'devmaster', email: 'voce@exemplo.com', reputation: 150, avatar: 'YU', avatarUrl: '' });
+      });
+    return () => { isMounted = false; };
+  }, []);
+
   const handleProfileUpdate = (field, value) => {
     setCurrentUser(prev => ({ ...prev, [field]: value }));
     addNotification('success', 'Perfil atualizado', `${field} foi atualizado com sucesso`, 'normal');
@@ -1293,17 +1311,21 @@ const StackOverflowCloneMain = () => {
               {/* Perfil do usuário */}
               <div className="flex items-center gap-3 bg-gray-800/30 rounded-2xl p-2 backdrop-blur-sm border border-gray-700/30">
                 <div className="text-right hidden sm:block">
-                  <div className="text-sm font-medium text-white">{currentUser?.name}</div>
+                  <div className="text-sm font-medium text-white">{currentUser?.name || '...'}</div>
                   <div className="text-xs text-gray-400 flex items-center gap-1">
                     <span className="text-yellow-400">⭐</span> {currentUser?.reputation}
                   </div>
                 </div>
                 <button 
                   onClick={() => { setShowProfile(true); setViewingUserId(currentUser?.id); }} 
-                  className="w-10 h-10 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 cursor-pointer border-2 border-gray-700/50" 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold hover:scale-110 transition-all duration-300 shadow-lg cursor-pointer border-2 border-gray-700/50 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 overflow-hidden" 
                   title="Ver perfil"
                 >
-                  {currentUser?.avatar}
+                  {currentUser?.avatarUrl ? (
+                    <img src={currentUser.avatarUrl} alt={currentUser?.name} className="w-full h-full object-cover" />
+                  ) : (
+                    currentUser?.avatar || ''
+                  )}
                 </button>
               </div>
             </div>

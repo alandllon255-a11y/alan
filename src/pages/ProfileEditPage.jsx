@@ -16,7 +16,7 @@ const ProfileEditPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({ id: '', name: '', bio: '', avatarUrl: '', githubUrl: '', linkedinUrl: '', twitterUrl: '' });
+  const [form, setForm] = useState({ id: '', name: '', bio: '', avatarUrl: '', githubUrl: '', linkedinUrl: '', twitterUrl: '', portfolioUrl: '' });
   const [preview, setPreview] = useState('');
 
   useEffect(() => {
@@ -72,7 +72,7 @@ const ProfileEditPage = () => {
     setSaving(true);
     setError('');
     try {
-      await updateProfile(form.id, { name: form.name, bio: form.bio, avatarUrl: form.avatarUrl });
+      await updateProfile(form.id, { name: form.name, bio: form.bio, avatarUrl: form.avatarUrl, portfolioUrl: form.portfolioUrl });
       navigate('/');
     } catch (e) {
       setError('Falha ao salvar perfil');
@@ -131,6 +131,9 @@ const ProfileEditPage = () => {
                 <input name="twitterUrl" value={form.twitterUrl} onChange={handleChange} className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://twitter.com/usuario" />
               </Field>
             </div>
+            <Field label="Portfólio">
+              <input name="portfolioUrl" value={form.portfolioUrl} onChange={handleChange} className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://meuportfolio.com" />
+            </Field>
 
             <div className="flex gap-3">
               <button onClick={handleSave} disabled={saving} className={`px-5 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-500 transition-colors ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}>Salvar</button>
