@@ -8,6 +8,7 @@ import {
   Briefcase, Moon, Sun, Users,
 
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -32,6 +33,7 @@ import { useTheme } from './hooks/useTheme.js';
 import { useChat } from './hooks/useChat.js';
 
 const StackOverflowCloneMain = () => {
+  const navigate = typeof window !== 'undefined' ? useNavigate() : () => {};
   // Definir currentUser
   const [currentUser, setCurrentUser] = useState({
     id: 7,
@@ -789,7 +791,7 @@ const StackOverflowCloneMain = () => {
                   <div className="flex gap-2 justify-center md:justify-end">
                     {isOwnProfile ? (
                       <>
-                        <button onClick={() => setEditingProfile(true)} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"><Edit2 className="w-4 h-4" />Editar Perfil</button>
+                        <button onClick={() => navigate('/profile/edit')} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"><Edit2 className="w-4 h-4" />Editar Perfil</button>
                         <button onClick={() => setProfileTheme(prev => prev === 'dark' ? 'light' : 'dark')} className="p-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">{profileTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
                       </>
                     ) : (

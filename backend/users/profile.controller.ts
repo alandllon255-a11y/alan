@@ -1,5 +1,10 @@
-import { Controller, Get, Request } from '@nestjs/common';
+/* eslint-disable */
+import { Controller, Get, Patch, Post, Request, UseGuards, UploadedFile, UseInterceptors, Param, Body, ForbiddenException } from '@nestjs/common';
 import { getPrisma } from '../prisma.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { FileInterceptor } from '@nestjs/platform-express';
+import multer from 'multer';
+import { MediaService } from '../media/media.service.js';
 
 function rankTitleFromLevel(level: number): string {
   if (level < 5) return 'Iniciante';
@@ -11,6 +16,7 @@ function rankTitleFromLevel(level: number): string {
 
 @Controller('users')
 export class ProfileController {
+  constructor(private readonly mediaService: MediaService) {}
   @Get('profile')
   async getProfile(@Request() req) {
     const userId = (req.user?.id || req.headers['x-user-id'] || '7').toString();
@@ -22,6 +28,8 @@ export class ProfileController {
           id: true,
           email: true,
           name: true,
+          bio: true,
+          avatarUrl: true,
           reputationPoints: true,
           currencyBalance: true,
           currentLevel: true,
@@ -46,6 +54,8 @@ export class ProfileController {
         id: user.id,
         email: user.email,
         name: user.name,
+        bio: user.bio,
+        avatarUrl: user.avatarUrl,
         reputation_points: user.reputationPoints,
         currency_balance: user.currencyBalance,
         current_level: user.currentLevel,
@@ -66,6 +76,42 @@ export class ProfileController {
         warning: 'DB indisponível, retornando valores padrão',
       };
     }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('upload/avatar')
+  @UseInterceptors(FileInterceptor('file', { storage: multer.memoryStorage() }))
+  async uploadAvatar(@UploadedFile() file: any) {
+    if (!file) {
+      return { error: 'No file uploaded' };
+    }
+    const result = await this.mediaService.uploadImage(file.buffer, file.originalname, {
+      transformation: [{ width: 512, height: 512, crop: 'fill', gravity: 'face' }],
+      folder: process.env.CLOUDINARY_FOLDER || 'devforum/avatars',
+    });
+    return { url: result.secure_url };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/profile')
+  async updateProfile(@Param('id') id: string, @Body() body: any, @Request() req) {
+    const authUserId = (req.user?.id || '').toString();
+    if (!authUserId || authUserId !== id) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+    const prisma = getPrisma();
+    const data: any = {};
+    if (typeof body.name !== 'undefined') data.name = body.name;
+    if (typeof body.bio !== 'undefined') data.bio = body.bio;
+    if (typeof body.avatarUrl !== 'undefined') data.avatarUrl = body.avatarUrl;
+    // Ignore unsupported fields (e.g., social links, portfolio) since they are not in the schema
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data,
+      select: { id: true, name: true, bio: true, avatarUrl: true },
+    });
+    return updated;
   }
 }
 
