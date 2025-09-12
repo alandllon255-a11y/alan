@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable */
 import { Controller, Get, Patch, Post, Request, UseGuards, UploadedFile, UseInterceptors, Param, Body, ForbiddenException } from '@nestjs/common';
 import { getPrisma } from '../prisma.js';

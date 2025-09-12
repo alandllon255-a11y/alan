@@ -41,7 +41,12 @@ const ProfileEditPage = () => {
       .finally(() => setUploading(false));
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] }, maxFiles: 1 });
+  const onDropRejected = useCallback((fileRejections) => {
+    if (fileRejections && fileRejections.length > 0) {
+      setError('Arquivo inválido. Envie uma imagem até 5MB.');
+    }
+  }, []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, onDropRejected, accept: { 'image/*': [] }, maxFiles: 1, maxSize: 5 * 1024 * 1024 });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
