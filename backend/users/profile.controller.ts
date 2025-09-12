@@ -80,7 +80,16 @@ export class ProfileController {
 
   @UseGuards(JwtAuthGuard)
   @Post('upload/avatar')
-  @UseInterceptors(FileInterceptor('file', { storage: multer.memoryStorage() }))
+  @UseInterceptors(FileInterceptor('file', {
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!/^image\/(jpeg|png|webp|gif|jpg)$/.test(file.mimetype)) {
+        return cb(new Error('Tipo de arquivo não suportado'), false);
+      }
+      cb(null, true);
+    }
+  }))
   async uploadAvatar(@UploadedFile() file: any) {
     if (!file) {
       return { error: 'No file uploaded' };

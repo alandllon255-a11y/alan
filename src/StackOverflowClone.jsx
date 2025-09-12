@@ -33,7 +33,7 @@ import { useTheme } from './hooks/useTheme.js';
 import { useChat } from './hooks/useChat.js';
 
 const StackOverflowCloneMain = () => {
-  const navigate = typeof window !== 'undefined' ? useNavigate() : () => {};
+  const navigate = useNavigate();
   // Definir currentUser
   const [currentUser, setCurrentUser] = useState({
     id: 7,

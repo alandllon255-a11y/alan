@@ -15,6 +15,7 @@ const ProfileEditPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ id: '', name: '', bio: '', avatarUrl: '', githubUrl: '', linkedinUrl: '', twitterUrl: '' });
   const [preview, setPreview] = useState('');
 
@@ -33,9 +34,11 @@ const ProfileEditPage = () => {
     const file = acceptedFiles[0];
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
+    setUploading(true);
     uploadAvatar(file)
       .then(({ url }) => setForm((prev) => ({ ...prev, avatarUrl: url })))
-      .catch(() => setError('Falha no upload do avatar'));
+      .catch(() => setError('Falha no upload do avatar'))
+      .finally(() => setUploading(false));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'image/*': [] }, maxFiles: 1 });
@@ -84,7 +87,10 @@ const ProfileEditPage = () => {
                   <div className="w-full h-full flex items-center justify-center text-gray-400">Sem avatar</div>
                 )}
               </div>
-              <div>Arraste uma imagem ou clique para enviar</div>
+              <div className="flex items-center justify-center gap-2">
+                <span>Arraste uma imagem ou clique para enviar</span>
+                {uploading && (<span className="text-xs text-blue-400 animate-pulse">Enviando...</span>)}
+              </div>
             </div>
           </div>
 
