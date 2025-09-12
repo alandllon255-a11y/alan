@@ -22,6 +22,7 @@ const ProfileEditPage = () => {
   useEffect(() => {
     getProfile()
       .then((p) => {
+        try { localStorage.setItem('x_user_id', p.id); } catch (_) {}
         setForm((prev) => ({ ...prev, id: p.id, name: p.name || '', bio: p.bio || '', avatarUrl: p.avatarUrl || '' }));
         setPreview(p.avatarUrl || '');
       })
