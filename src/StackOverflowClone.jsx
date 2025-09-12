@@ -8,10 +8,20 @@ import {
   Briefcase, Moon, Sun, Users,
 
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import bash from 'highlight.js/lib/languages/bash';
+import jsonLang from 'highlight.js/lib/languages/json';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import plaintext from 'highlight.js/lib/languages/plaintext';
 import ProfileRecentQuestions from './components/profile/ProfileRecentQuestions.jsx';
 import ProfileRecentAnswers from './components/profile/ProfileRecentAnswers.jsx';
 import ChatView from './components/chat/ChatView.jsx';
@@ -30,18 +40,12 @@ import { useTheme } from './hooks/useTheme.js';
 
  
 import { useChat } from './hooks/useChat.js';
+import { getProfile } from './services/api.js';
 
 const StackOverflowCloneMain = () => {
+  const navigate = useNavigate();
   // Definir currentUser
-  const [currentUser, setCurrentUser] = useState({
-    id: 7,
-    name: "Você",
-    username: "devmaster",
-    email: "voce@exemplo.com",
-    reputation: 150,
-    avatar: "YU",
-    portfolio: []
-  });
+  const [currentUser, setCurrentUser] = useState(null);
 
   
 
@@ -58,7 +62,7 @@ const StackOverflowCloneMain = () => {
     markAsRead,
     getConversationMessages,
     requestNotificationPermission
-  } = useChat(currentUser.id, currentUser.name);
+  } = useChat(currentUser?.id || 0, currentUser?.name || '');
 
   const [questions, setQuestions] = useState([
     {
@@ -409,9 +413,38 @@ const StackOverflowCloneMain = () => {
 
   const renderMarkdown = (content) => {
     if (!content) return '';
+    // registrar linguagens idempotente
+    try {
+      if (!hljs.getLanguage('javascript')) hljs.registerLanguage('javascript', javascript);
+      if (!hljs.getLanguage('js')) hljs.registerLanguage('js', javascript);
+      if (!hljs.getLanguage('typescript')) hljs.registerLanguage('typescript', typescript);
+      if (!hljs.getLanguage('ts')) hljs.registerLanguage('ts', typescript);
+      if (!hljs.getLanguage('python')) hljs.registerLanguage('python', python);
+      if (!hljs.getLanguage('py')) hljs.registerLanguage('py', python);
+      if (!hljs.getLanguage('bash')) hljs.registerLanguage('bash', bash);
+      if (!hljs.getLanguage('sh')) hljs.registerLanguage('sh', bash);
+      if (!hljs.getLanguage('json')) hljs.registerLanguage('json', jsonLang);
+      if (!hljs.getLanguage('xml')) hljs.registerLanguage('xml', xml);
+      if (!hljs.getLanguage('html')) hljs.registerLanguage('html', xml);
+      if (!hljs.getLanguage('css')) hljs.registerLanguage('css', css);
+      if (!hljs.getLanguage('plaintext')) hljs.registerLanguage('plaintext', plaintext);
+      if (!hljs.getLanguage('text')) hljs.registerLanguage('text', plaintext);
+    } catch (_) {}
+
     let processed = content.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-2 py-1 rounded text-blue-400 text-sm font-mono">$1</code>');
     processed = processed.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto my-2"><code class="text-green-400 text-sm font-mono">${escapeHtml(code)}</code></pre>`;
+      const language = (lang || 'plaintext').toLowerCase();
+      let highlighted;
+      try {
+        if (hljs.getLanguage(language)) {
+          highlighted = hljs.highlight(code, { language }).value;
+        } else {
+          highlighted = hljs.highlight(code, { language: 'plaintext' }).value;
+        }
+      } catch (_) {
+        highlighted = escapeHtml(code);
+      }
+      return `<pre class="p-0 my-2 overflow-x-auto rounded-lg"><code class="hljs language-${language}">${highlighted}</code></pre>`;
     });
     processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
     processed = processed.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
@@ -667,6 +700,35 @@ const StackOverflowCloneMain = () => {
     return () => clearInterval(interval);
   }, [questions, notificationSettings, currentUser, addNotification]);
 
+  // Carregar perfil real do backend
+  useEffect(() => {
+    let isMounted = true;
+    getProfile()
+      .then((p) => {
+        if (!isMounted) return;
+        const user = {
+          id: p.id,
+          name: p.name || 'Você',
+          username: p.email?.split('@')[0] || 'devforum',
+          email: p.email || '',
+          reputation: p.reputation_points || 0,
+          avatarUrl: p.avatarUrl || '',
+          avatar: (p.name || 'Você').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase(),
+          githubUrl: p.githubUrl || '',
+          linkedinUrl: p.linkedinUrl || '',
+          twitterUrl: p.twitterUrl || '',
+          portfolioUrl: p.portfolioUrl || '',
+        };
+        try { localStorage.setItem('x_user_id', p.id); } catch(_) {}
+        setCurrentUser(user);
+      })
+      .catch(() => {
+        // mantém mock se falhar
+        if (!currentUser) setCurrentUser({ id: 7, name: 'Você', username: 'devmaster', email: 'voce@exemplo.com', reputation: 150, avatar: 'YU', avatarUrl: '' });
+      });
+    return () => { isMounted = false; };
+  }, []);
+
   const handleProfileUpdate = (field, value) => {
     setCurrentUser(prev => ({ ...prev, [field]: value }));
     addNotification('success', 'Perfil atualizado', `${field} foi atualizado com sucesso`, 'normal');
@@ -789,7 +851,7 @@ const StackOverflowCloneMain = () => {
                   <div className="flex gap-2 justify-center md:justify-end">
                     {isOwnProfile ? (
                       <>
-                        <button onClick={() => setEditingProfile(true)} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"><Edit2 className="w-4 h-4" />Editar Perfil</button>
+                        <button onClick={() => navigate('/profile/edit')} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"><Edit2 className="w-4 h-4" />Editar Perfil</button>
                         <button onClick={() => setProfileTheme(prev => prev === 'dark' ? 'light' : 'dark')} className="p-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">{profileTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
                       </>
                     ) : (
@@ -1253,17 +1315,21 @@ const StackOverflowCloneMain = () => {
               {/* Perfil do usuário */}
               <div className="flex items-center gap-3 bg-gray-800/30 rounded-2xl p-2 backdrop-blur-sm border border-gray-700/30">
                 <div className="text-right hidden sm:block">
-                  <div className="text-sm font-medium text-white">{currentUser?.name}</div>
+                  <div className="text-sm font-medium text-white">{currentUser?.name || '...'}</div>
                   <div className="text-xs text-gray-400 flex items-center gap-1">
                     <span className="text-yellow-400">⭐</span> {currentUser?.reputation}
                   </div>
                 </div>
                 <button 
                   onClick={() => { setShowProfile(true); setViewingUserId(currentUser?.id); }} 
-                  className="w-10 h-10 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-purple-500/25 cursor-pointer border-2 border-gray-700/50" 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold hover:scale-110 transition-all duration-300 shadow-lg cursor-pointer border-2 border-gray-700/50 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 overflow-hidden" 
                   title="Ver perfil"
                 >
-                  {currentUser?.avatar}
+                  {currentUser?.avatarUrl ? (
+                    <img src={currentUser.avatarUrl} alt={currentUser?.name} className="w-full h-full object-cover" />
+                  ) : (
+                    currentUser?.avatar || ''
+                  )}
                 </button>
               </div>
             </div>
