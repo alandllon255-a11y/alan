@@ -14,6 +14,7 @@ import {
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ProfileRecentQuestions from './components/profile/ProfileRecentQuestions.jsx';
 import ProfileRecentAnswers from './components/profile/ProfileRecentAnswers.jsx';
+import EditableProfile from './components/profile/EditableProfile.jsx';
 import ChatView from './components/chat/ChatView.jsx';
 import FeedView from './components/feed/FeedView.jsx';
  
@@ -40,7 +41,46 @@ const StackOverflowCloneMain = () => {
     email: "voce@exemplo.com",
     reputation: 150,
     avatar: "YU",
-    portfolio: []
+    portfolio: [],
+    title: "Desenvolvedor Full Stack",
+    company: "DevForum",
+    location: "Brasil",
+    bio: "Desenvolvedor apaixonado por tecnologia e aprendizado contínuo. Especialista em React, Node.js e soluções inovadoras.",
+    website: "https://github.com/devmaster",
+    avatarUrl: "",
+    bannerUrl: "",
+    projects: [
+      {
+        id: 1,
+        title: "Sistema de Chat em Tempo Real",
+        description: "Aplicação de chat utilizando WebSockets com React e Node.js",
+        link: "https://github.com/devmaster/realtime-chat",
+        imageUrl: "",
+        createdAt: new Date('2024-01-15')
+      }
+    ],
+    experiences: [
+      {
+        id: 1,
+        title: "Desenvolvedor Full Stack",
+        company: "DevForum",
+        period: "Jan 2023 - Presente",
+        description: "Desenvolvimento de aplicações web modernas utilizando React, Node.js e bancos de dados relacionais e não relacionais.",
+        createdAt: new Date('2023-01-01')
+      }
+    ],
+    skills: [
+      { id: 1, name: "JavaScript", level: 90, endorsed: 15 },
+      { id: 2, name: "React", level: 85, endorsed: 12 },
+      { id: 3, name: "Node.js", level: 80, endorsed: 10 },
+      { id: 4, name: "TypeScript", level: 75, endorsed: 8 },
+      { id: 5, name: "Python", level: 70, endorsed: 6 }
+    ],
+    social: {
+      github: "devmaster",
+      linkedin: "devmaster",
+      twitter: "@devmaster"
+    }
   });
 
   
@@ -260,6 +300,7 @@ const StackOverflowCloneMain = () => {
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [toastNotifications, setToastNotifications] = useState([]);
   const [showProfile, setShowProfile] = useState(false);
+  const [showEditableProfile, setShowEditableProfile] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileTab, setProfileTab] = useState('overview');
   const [viewingUserId, setViewingUserId] = useState(null);
@@ -672,6 +713,30 @@ const StackOverflowCloneMain = () => {
     addNotification('success', 'Perfil atualizado', `${field} foi atualizado com sucesso`, 'normal');
   };
 
+  const handleFullProfileUpdate = (profileData) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      name: profileData.name,
+      username: profileData.username,
+      title: profileData.title,
+      company: profileData.company,
+      location: profileData.location,
+      bio: profileData.bio,
+      website: profileData.website,
+      avatarUrl: profileData.avatarUrl,
+      bannerUrl: profileData.bannerUrl,
+      projects: profileData.projects,
+      experiences: profileData.experiences,
+      skills: profileData.skills,
+      social: {
+        github: profileData.github,
+        linkedin: profileData.linkedin,
+        twitter: profileData.twitter
+      }
+    }));
+    addNotification('success', 'Perfil completo atualizado!', 'Todas as suas informações foram salvas com sucesso', 'high');
+  };
+
   const handleSkillEndorse = (skillName) => {
     setCurrentUser(prev => ({ ...prev, skills: prev.skills.map(skill => skill.name === skillName ? { ...skill, endorsed: skill.endorsed + 1 } : skill) }));
   };
@@ -789,7 +854,20 @@ const StackOverflowCloneMain = () => {
                   <div className="flex gap-2 justify-center md:justify-end">
                     {isOwnProfile ? (
                       <>
-                        <button onClick={() => setEditingProfile(true)} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"><Edit2 className="w-4 h-4" />Editar Perfil</button>
+                        <button 
+                          onClick={() => {
+                            setShowEditableProfile(true);
+                            setShowProfile(false);
+                          }} 
+                          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-blue-500/25"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Editar Perfil Completo
+                        </button>
+                        <button onClick={() => setEditingProfile(true)} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors flex items-center gap-2">
+                          <Edit2 className="w-4 h-4" />
+                          Edição Rápida
+                        </button>
                         <button onClick={() => setProfileTheme(prev => prev === 'dark' ? 'light' : 'dark')} className="p-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">{profileTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
                       </>
                     ) : (
@@ -1327,7 +1405,16 @@ const StackOverflowCloneMain = () => {
           </div>
         )}
       </header>
-      {showProfile ? (
+      {showEditableProfile ? (
+        <EditableProfile 
+          user={currentUser}
+          onBack={() => {
+            setShowEditableProfile(false);
+            setShowProfile(true);
+          }}
+          onUpdateProfile={handleFullProfileUpdate}
+        />
+      ) : showProfile ? (
         <UserProfile user={viewingUserId === currentUser?.id ? currentUser : null} isOwnProfile={viewingUserId === currentUser?.id} />
       ) : (
         <main className="container mx-auto px-4 py-8">
