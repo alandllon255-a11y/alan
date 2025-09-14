@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { profileService } from '../services/profileService';
 import { Github, Linkedin, Twitter, Link as LinkIcon, User, Sparkles } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
 
 const tabs = [
   { id: 'projetos', label: 'Projetos' },
@@ -15,7 +16,29 @@ const ProfileViewPage = () => {
   const [profile, setProfile] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [activeTabId, setActiveTabId] = useState('projetos');
-  const randomBannerUrl = useMemo(() => `https://picsum.photos/1600/600?random=${Math.floor(Math.random()*1000000)}`, []);
+  const { isDark, accentColor } = useTheme();
+  const curated = useMemo(() => ({
+    dark: [
+      'nature,night,stars', 'city,night,lights', 'mountain,night,sky', 'space,nebula,stars'
+    ],
+    light: [
+      'nature,day,forest', 'city,day,architecture', 'ocean,beach,day', 'sky,clouds,day'
+    ],
+    accent: {
+      blue: 'ocean,blue,water',
+      purple: 'nebula,purple,space',
+      pink: 'sunset,pink,clouds',
+      green: 'forest,green,nature',
+      indigo: 'night,indigo,city'
+    }
+  }), []);
+  const userSeed = useMemo(() => (profile?.id ? profile.id : (localStorage.getItem('devUserId') || 'seed')), [profile?.id]);
+  const pickFrom = isDark ? curated.dark : curated.light;
+  const themeQuery = curated.accent[accentColor] || pickFrom[0];
+  const index = Math.abs(Array.from(userSeed).reduce((a, c) => a + c.charCodeAt(0), 0)) % pickFrom.length;
+  const curatedQuery = pickFrom[index];
+  const deterministicBannerUrl = `https://source.unsplash.com/1600x600/?${encodeURIComponent(themeQuery)}`;
+  const fallbackBannerUrl = `https://source.unsplash.com/1600x600/?${encodeURIComponent(curatedQuery)}`;
 
   const initials = useMemo(() => {
     const name = profile?.name?.trim() || '';
@@ -60,7 +83,7 @@ const ProfileViewPage = () => {
       {/* Banner estilizado na nossa paleta */}
       <div className="relative group rounded-2xl overflow-hidden mb-8 mx-auto max-w-6xl">
         {// eslint-disable-next-line @next/next/no-img-element
-        <img src={profile?.banner_url || randomBannerUrl} alt="Banner" className="w-full h-48 sm:h-64 object-cover" />}
+        <img src={profile?.banner_url || deterministicBannerUrl || fallbackBannerUrl} alt="Banner" className="w-full h-48 sm:h-64 object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/20 to-gray-900" />
       </div>
 
