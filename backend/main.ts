@@ -8,6 +8,13 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log']
   });
   app.setGlobalPrefix('api');
+  // Enable CORS for frontend dev server and configurable origin
+  app.enableCors({
+    origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id']
+  });
   const port = Number(process.env.BACKEND_PORT || 4000);
   await app.listen(port);
   // eslint-disable-next-line no-console
