@@ -28,6 +28,24 @@ export const profileService = {
     return res.json();
   },
 
+  async uploadBanner(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('accessToken');
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const devUserId = localStorage.getItem('devUserId');
+    if (devUserId) headers['X-User-Id'] = devUserId;
+
+    const res = await fetch(`${API_BASE}/users/upload/banner`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Falha ao enviar banner');
+    return res.json();
+  },
+
   async updateProfile(userId, data) {
     const res = await fetch(`${API_BASE}/users/${userId}/profile`, {
       method: 'PATCH',

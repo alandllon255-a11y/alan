@@ -31,6 +31,12 @@ export class ProfileController {
           email: true,
           name: true,
           bio: true,
+          bannerUrl: true,
+          headline: true,
+          location: true,
+          company: true,
+          education: true,
+          websiteUrl: true,
           avatarUrl: true,
           githubUrl: true,
           linkedinUrl: true,
@@ -61,6 +67,12 @@ export class ProfileController {
         email: user.email,
         name: user.name,
         bio: user.bio,
+        banner_url: user.bannerUrl,
+        headline: user.headline,
+        location: user.location,
+        company: user.company,
+        education: user.education,
+        website_url: user.websiteUrl,
         avatar_url: user.avatarUrl,
         github_url: user.githubUrl,
         linkedin_url: user.linkedinUrl,
@@ -90,13 +102,28 @@ export class ProfileController {
 
   @Post('upload/avatar')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Arquivo de imagem não enviado');
     }
     const uploadResult = await this.mediaService.uploadImageFromBuffer(file.buffer, {
       folder: 'devforum/avatars',
+      overwrite: true,
+      resource_type: 'image'
+    });
+    return { url: uploadResult.secure_url };
+  }
+
+  @Post('upload/banner')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }))
+  async uploadBanner(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Arquivo de imagem não enviado');
+    }
+    const uploadResult = await this.mediaService.uploadImageFromBuffer(file.buffer, {
+      folder: 'devforum/banners',
       overwrite: true,
       resource_type: 'image'
     });
@@ -111,7 +138,10 @@ export class ProfileController {
       throw new ForbiddenException('Você só pode editar o seu próprio perfil');
     }
 
-    const allowedFields = ['name', 'bio', 'avatarUrl', 'githubUrl', 'linkedinUrl', 'twitterUrl', 'portfolioUrl'];
+    const allowedFields = [
+      'name', 'bio', 'avatarUrl', 'githubUrl', 'linkedinUrl', 'twitterUrl', 'portfolioUrl',
+      'bannerUrl', 'headline', 'location', 'company', 'education', 'websiteUrl'
+    ];
     const data: Record<string, any> = {};
     for (const key of allowedFields) {
       if (typeof body[key] !== 'undefined') {

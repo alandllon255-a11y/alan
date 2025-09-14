@@ -58,7 +58,12 @@ const ProfileViewPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       {/* Banner estilizado na nossa paleta */}
       <div className="relative group rounded-2xl overflow-hidden mb-8 mx-auto max-w-6xl">
-        <div className="w-full h-48 sm:h-64 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-pink-600/30" />
+        {profile?.banner_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={profile.banner_url} alt="Banner" className="w-full h-48 sm:h-64 object-cover" />
+        ) : (
+          <div className="w-full h-48 sm:h-64 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-pink-600/30" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/20 to-gray-900" />
       </div>
 
@@ -85,7 +90,8 @@ const ProfileViewPage = () => {
 
                   <div className="text-center mt-4">
                     <h1 className="text-2xl font-bold text-white">{profile?.name || 'Você'}</h1>
-                    <p className="text-gray-400 text-sm">Nível {profile?.current_level} • {profile?.rank_title}</p>
+                    <p className="text-blue-300 text-sm font-medium">{profile?.headline || '@seunome | Seu cargo'}</p>
+                    <p className="text-gray-400 text-xs mt-1">Nível {profile?.current_level} • {profile?.rank_title}{profile?.location ? ` • ${profile.location}` : ''}</p>
                   </div>
 
                   <div className="mt-6 text-center">
@@ -105,6 +111,15 @@ const ProfileViewPage = () => {
                 <div className="grid grid-cols-1 gap-3">
                   {profile?.portfolio_url && (
                     <a href={profile.portfolio_url} target="_blank" rel="noreferrer" className="w-full text-center bg-gray-700/60 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm truncate">{profile.portfolio_url}</a>
+                  )}
+                  {profile?.company && (
+                    <div className="text-gray-300 text-sm">Empresa: <span className="font-medium">{profile.company}</span></div>
+                  )}
+                  {profile?.education && (
+                    <div className="text-gray-300 text-sm">Formação: <span className="font-medium">{profile.education}</span></div>
+                  )}
+                  {profile?.website_url && (
+                    <a href={profile.website_url} target="_blank" rel="noreferrer" className="w-full text-center bg-gray-700/60 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm truncate">{profile.website_url}</a>
                   )}
                   <div className="flex justify-center gap-5 mt-2">
                     {profile?.linkedin_url && (
