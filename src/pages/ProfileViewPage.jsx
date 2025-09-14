@@ -15,6 +15,7 @@ const ProfileViewPage = () => {
   const [profile, setProfile] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [activeTabId, setActiveTabId] = useState('projetos');
+  const randomBannerUrl = useMemo(() => `https://picsum.photos/1600/600?random=${Math.floor(Math.random()*1000000)}`, []);
 
   const initials = useMemo(() => {
     const name = profile?.name?.trim() || '';
@@ -58,12 +59,8 @@ const ProfileViewPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       {/* Banner estilizado na nossa paleta */}
       <div className="relative group rounded-2xl overflow-hidden mb-8 mx-auto max-w-6xl">
-        {profile?.banner_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.banner_url} alt="Banner" className="w-full h-48 sm:h-64 object-cover" />
-        ) : (
-          <div className="w-full h-48 sm:h-64 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-pink-600/30" />
-        )}
+        {// eslint-disable-next-line @next/next/no-img-element
+        <img src={profile?.banner_url || randomBannerUrl} alt="Banner" className="w-full h-48 sm:h-64 object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/20 to-gray-900" />
       </div>
 
