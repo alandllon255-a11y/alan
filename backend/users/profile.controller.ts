@@ -102,7 +102,14 @@ export class ProfileController {
 
   @Post('upload/avatar')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (file.mimetype && file.mimetype.startsWith('image/')) return cb(null, true);
+      return cb(new BadRequestException('Tipo de arquivo inválido'), false);
+    }
+  }))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Arquivo de imagem não enviado');
@@ -117,7 +124,14 @@ export class ProfileController {
 
   @Post('upload/banner')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (file.mimetype && file.mimetype.startsWith('image/')) return cb(null, true);
+      return cb(new BadRequestException('Tipo de arquivo inválido'), false);
+    }
+  }))
   async uploadBanner(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Arquivo de imagem não enviado');

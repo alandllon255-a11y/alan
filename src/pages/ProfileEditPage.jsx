@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { profileService } from '../services/profileService';
 import { ArrowLeft, Upload, Save, Link as LinkIcon, Github, Linkedin, Twitter } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 const initialForm = {
   name: '',
@@ -27,6 +28,7 @@ const ProfileEditPage = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(null);
+  const { success, error, toasts, removeToast } = useToast();
 
   const onDrop = useCallback(async (acceptedFiles) => {
     const file = acceptedFiles?.[0];
@@ -37,8 +39,7 @@ const ProfileEditPage = () => {
       const res = await profileService.uploadAvatar(file);
       setForm((prev) => ({ ...prev, avatarUrl: res.url }));
     } catch (err) {
-      // eslint-disable-next-line no-alert
-      alert('Erro ao enviar avatar');
+      error('Falha no upload', 'Não foi possível enviar o avatar');
     } finally {
       setUploading(false);
     }
@@ -61,8 +62,7 @@ const ProfileEditPage = () => {
       const res = await profileService.uploadBanner(file);
       setForm((prev) => ({ ...prev, bannerUrl: res.url }));
     } catch (err) {
-      // eslint-disable-next-line no-alert
-      alert('Erro ao enviar banner');
+      error('Falha no upload', 'Não foi possível enviar o banner');
     } finally {
       setUploadingBanner(false);
     }
@@ -105,12 +105,21 @@ const ProfileEditPage = () => {
 
   const onSave = async () => {
     try {
+      // URL validation (optional)
+      const urlFields = ['websiteUrl', 'githubUrl', 'linkedinUrl', 'twitterUrl', 'portfolioUrl'];
+      for (const f of urlFields) {
+        const v = form[f];
+        if (v && !/^https?:\/\//i.test(v)) {
+          error('URL inválida', `O campo ${f} deve começar com http(s)://`);
+          return;
+        }
+      }
       setSaving(true);
       await profileService.updateProfile(myUserId, form);
-      navigate('/');
+      success('Perfil atualizado', 'Suas informações foram salvas com sucesso');
+      navigate('/profile');
     } catch (err) {
-      // eslint-disable-next-line no-alert
-      alert('Erro ao salvar perfil');
+      error('Falha ao salvar', 'Não foi possível salvar suas informações');
     } finally {
       setSaving(false);
     }
@@ -309,6 +318,11 @@ const ProfileEditPage = () => {
             </div>
           </div>
         </div>
+      </div>
+      {/* Toast Container */}
+      <div className="pointer-events-none">
+        {/* eslint-disable-next-line react/jsx-pascal-case */}
+        <ToastContainer toasts={toasts} onClose={removeToast} />
       </div>
     </div>
   );
